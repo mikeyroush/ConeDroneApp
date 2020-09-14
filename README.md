@@ -1,2 +1,0 @@
-# ConeDroneApp
-Senior Design Project
