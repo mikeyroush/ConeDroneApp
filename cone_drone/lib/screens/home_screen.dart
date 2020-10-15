@@ -64,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: 'Verify',
                   backgroundColor: Colors.blueAccent,
                   onPress: () async {
-                    _auth.currentUser.reload();
+                    await _auth.currentUser.reload();
                     setState(() {
                       verified = _auth.currentUser.emailVerified;
                     });
