@@ -18,6 +18,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _auth = FirebaseAuth.instance;
   bool verified = false;
+  bool isCollapsed = false;
+  double screenWidth, screenHeight;
 
   @override
   void initState() {
@@ -45,41 +47,119 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!verified)
-      return Scaffold(
-        backgroundColor: Colors.blueGrey.shade900,
-        body: SafeArea(
+    if (!verified) return verifyEmail(context);
+
+    // email verified
+    Size size = MediaQuery.of(context).size;
+    screenHeight = size.height;
+    screenWidth = size.width;
+    return Scaffold(
+        backgroundColor: Colors.blueGrey.shade700,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            menu(context),
+            home(context),
+          ],
+        ));
+  }
+
+  Widget verifyEmail(context) {
+    return Scaffold(
+      backgroundColor: Colors.blueGrey.shade900,
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Check your email for a verification link.',
+                style: kTitleTextStyle.copyWith(color: Colors.white70),
+              ),
+              SizedBox(height: 10.0),
+              RoundedButton(
+                title: 'Verify',
+                backgroundColor: Colors.blueAccent,
+                onPress: () async {
+                  await _auth.currentUser.reload();
+                  setState(() {
+                    verified = _auth.currentUser.emailVerified;
+                  });
+                },
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget menu(context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Home',
+                style: kTitleTextStyle.copyWith(color: Colors.white70)),
+            SizedBox(height: 16.0),
+            Text('Pilots',
+                style: kTitleTextStyle.copyWith(color: Colors.white70)),
+            SizedBox(height: 16.0),
+            Text('Record',
+                style: kTitleTextStyle.copyWith(color: Colors.white70)),
+            SizedBox(height: 16.0),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget home(context) {
+    return AnimatedPositioned(
+      duration: Duration(milliseconds: 300),
+      top: isCollapsed ? 0 : 0.2 * screenHeight,
+      bottom: isCollapsed ? 0 : 0.2 * screenHeight,
+      right: isCollapsed ? 0 : -0.4 * screenWidth,
+      left: isCollapsed ? 0 : 0.6 * screenWidth,
+      child: Material(
+        borderRadius: isCollapsed
+            ? BorderRadius.circular(0)
+            : BorderRadius.circular(10.0),
+        elevation: 8.0,
+        color: Colors.blueGrey.shade900,
+        child: SafeArea(
           child: Padding(
-            padding: EdgeInsets.all(24.0),
+            padding: const EdgeInsets.only(left: 16.0, right: 16.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Check your email for a verification link.',
-                  style: kTitleTextStyle.copyWith(color: Colors.white70),
-                ),
-                SizedBox(height: 10.0),
-                RoundedButton(
-                  title: 'Verify',
-                  backgroundColor: Colors.blueAccent,
-                  onPress: () async {
-                    await _auth.currentUser.reload();
-                    setState(() {
-                      verified = _auth.currentUser.emailVerified;
-                    });
-                  },
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    InkWell(
+                      child: Icon(Icons.menu, color: Colors.white70),
+                      onTap: () {
+                        setState(() {
+                          isCollapsed = !isCollapsed;
+                        });
+                      },
+                    ),
+                    Text('HOME', style: kTextFieldStyle),
+                    Icon(Icons.settings, color: Colors.white70),
+                  ],
                 )
               ],
             ),
           ),
         ),
-      );
-
-    // else verified is true
-    return Container(
-      child:
-          Scaffold(body: Center(child: Text('HOME', style: kTitleTextStyle))),
+      ),
     );
   }
 }
