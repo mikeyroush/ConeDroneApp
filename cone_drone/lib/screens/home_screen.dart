@@ -1,3 +1,4 @@
+import 'package:cone_drone/screens/welcome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +10,7 @@ import 'package:modal_progress_hud/modal_progress_hud.dart';
 final _firestore = FirebaseFirestore.instance;
 User loggedInUser;
 enum Status { none, connected, disconnected }
+enum Collapsed { none, left, right }
 
 class HomeScreen extends StatefulWidget {
   static const String id = 'home_screen';
@@ -19,7 +21,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _auth = FirebaseAuth.instance;
   bool verified = false;
-  bool isCollapsed = true;
+  Collapsed collapsed = Collapsed.none;
   double screenWidth, screenHeight;
 
   // temp entries
@@ -29,6 +31,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     getCurrentUser();
+
+    // TODO: dynamically pull cone entries from somewhere
+    entries.removeRange(0, entries.length);
+    for (var i = 0; i < 50; i++) {
+      final entry = ConeEntry(
+        name: 'Cone $i',
+        status: (i % 2 == 0) ? Status.disconnected : Status.connected,
+      );
+      setState(() {
+        entries.add(entry);
+      });
+    }
   }
 
   void getCurrentUser() async {
@@ -54,14 +68,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!verified) return verifyEmail(context);
 
     // email verified
-    for (var i = 0; i < 50; i++) {
-      final entry = ConeEntry(
-        name: 'Cone $i',
-        status: (i % 2 == 0) ? Status.disconnected : Status.connected,
-      );
-      entries.add(entry);
-    }
-
     Size size = MediaQuery.of(context).size;
     screenHeight = size.height;
     screenWidth = size.width;
@@ -111,38 +117,71 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget menu(context) {
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.only(left: 16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.dashboard, color: Colors.white70),
-                SizedBox(width: 8.0),
-                Text('Dashboard', style: kMenuTextStyle),
-              ],
+      child: Row(
+        children: [
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.dashboard, color: Colors.white70),
+                      SizedBox(width: 8.0),
+                      Text('Dashboard', style: kMenuTextStyle),
+                    ],
+                  ),
+                  SizedBox(height: 16.0),
+                  Row(
+                    children: [
+                      Icon(Icons.person, color: Colors.white70),
+                      SizedBox(width: 8.0),
+                      Text('Pilots', style: kMenuTextStyle),
+                    ],
+                  ),
+                  SizedBox(height: 16.0),
+                  Row(
+                    children: [
+                      Icon(Icons.adjust, color: Colors.white70),
+                      SizedBox(width: 8.0),
+                      Text('Record', style: kMenuTextStyle),
+                    ],
+                  ),
+                  SizedBox(height: 16.0),
+                ],
+              ),
             ),
-            SizedBox(height: 16.0),
-            Row(
-              children: [
-                Icon(Icons.person, color: Colors.white70),
-                SizedBox(width: 8.0),
-                Text('Pilots', style: kMenuTextStyle),
-              ],
+          ),
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  InkWell(
+                    child: Row(
+                      children: [
+                        Icon(Icons.power_settings_new, color: Colors.white70),
+                        SizedBox(width: 8.0),
+                        Text('Logout', style: kMenuTextStyle),
+                      ],
+                    ),
+                    onTap: () {
+                      setState(() {
+                        _auth.signOut();
+                      });
+                      Navigator.popUntil(
+                          context, ModalRoute.withName(WelcomeScreen.id));
+                    },
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: 16.0),
-            Row(
-              children: [
-                Icon(Icons.adjust, color: Colors.white70),
-                SizedBox(width: 8.0),
-                Text('Record', style: kMenuTextStyle),
-              ],
-            ),
-            SizedBox(height: 16.0),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -150,12 +189,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget home(context) {
     return AnimatedPositioned(
       duration: Duration(milliseconds: 300),
-      top: isCollapsed ? 0 : 0.2 * screenHeight,
-      bottom: isCollapsed ? 0 : 0.2 * screenHeight,
-      right: isCollapsed ? 0 : -0.4 * screenWidth,
-      left: isCollapsed ? 0 : 0.6 * screenWidth,
+      top: (collapsed == Collapsed.none) ? 0 : 0.2 * screenHeight,
+      bottom: (collapsed == Collapsed.none) ? 0 : 0.2 * screenHeight,
+      right: (collapsed == Collapsed.none)
+          ? 0
+          : (collapsed == Collapsed.right)
+              ? -0.3 * screenWidth
+              : 0.5 * screenWidth,
+      left: (collapsed == Collapsed.none)
+          ? 0
+          : (collapsed == Collapsed.right)
+              ? 0.5 * screenWidth
+              : -0.3 * screenWidth,
       child: Material(
-        borderRadius: isCollapsed
+        borderRadius: (collapsed == Collapsed.none)
             ? BorderRadius.circular(0)
             : BorderRadius.circular(10.0),
         elevation: 8.0,
@@ -175,12 +222,25 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Icon(Icons.menu, color: Colors.white70),
                       onTap: () {
                         setState(() {
-                          isCollapsed = !isCollapsed;
+                          if (collapsed != Collapsed.none)
+                            collapsed = Collapsed.none;
+                          else
+                            collapsed = Collapsed.right;
                         });
                       },
                     ),
                     Text('Dashboard', style: kTextFieldStyle),
-                    Icon(Icons.settings, color: Colors.white70),
+                    InkWell(
+                      child: Icon(Icons.settings, color: Colors.white70),
+                      onTap: () {
+                        setState(() {
+                          if (collapsed != Collapsed.none)
+                            collapsed = Collapsed.none;
+                          else
+                            collapsed = Collapsed.left;
+                        });
+                      },
+                    ),
                   ],
                 ),
                 SizedBox(height: 16.0),

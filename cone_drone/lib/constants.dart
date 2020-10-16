@@ -7,7 +7,7 @@ const kTitleTextStyle = TextStyle(
 
 const kMenuTextStyle = TextStyle(
   fontWeight: FontWeight.bold,
-  fontSize: 30.0,
+  fontSize: 25.0,
   color: Colors.white70,
 );
 
