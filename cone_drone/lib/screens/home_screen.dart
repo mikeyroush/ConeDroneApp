@@ -8,6 +8,7 @@ import 'package:modal_progress_hud/modal_progress_hud.dart';
 
 final _firestore = FirebaseFirestore.instance;
 User loggedInUser;
+enum Status { none, connected, disconnected }
 
 class HomeScreen extends StatefulWidget {
   static const String id = 'home_screen';
@@ -18,8 +19,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _auth = FirebaseAuth.instance;
   bool verified = false;
-  bool isCollapsed = false;
+  bool isCollapsed = true;
   double screenWidth, screenHeight;
+
+  // temp entries
+  List<ConeEntry> entries = [];
 
   @override
   void initState() {
@@ -50,18 +54,27 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!verified) return verifyEmail(context);
 
     // email verified
+    for (var i = 0; i < 50; i++) {
+      final entry = ConeEntry(
+        name: 'Cone $i',
+        status: (i % 2 == 0) ? Status.disconnected : Status.connected,
+      );
+      entries.add(entry);
+    }
+
     Size size = MediaQuery.of(context).size;
     screenHeight = size.height;
     screenWidth = size.width;
     return Scaffold(
-        backgroundColor: Colors.blueGrey.shade700,
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            menu(context),
-            home(context),
-          ],
-        ));
+      backgroundColor: Colors.blueGrey.shade700,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          menu(context),
+          home(context),
+        ],
+      ),
+    );
   }
 
   Widget verifyEmail(context) {
@@ -104,14 +117,29 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Home',
-                style: kTitleTextStyle.copyWith(color: Colors.white70)),
+            Row(
+              children: [
+                Icon(Icons.dashboard, color: Colors.white70),
+                SizedBox(width: 8.0),
+                Text('Dashboard', style: kMenuTextStyle),
+              ],
+            ),
             SizedBox(height: 16.0),
-            Text('Pilots',
-                style: kTitleTextStyle.copyWith(color: Colors.white70)),
+            Row(
+              children: [
+                Icon(Icons.person, color: Colors.white70),
+                SizedBox(width: 8.0),
+                Text('Pilots', style: kMenuTextStyle),
+              ],
+            ),
             SizedBox(height: 16.0),
-            Text('Record',
-                style: kTitleTextStyle.copyWith(color: Colors.white70)),
+            Row(
+              children: [
+                Icon(Icons.adjust, color: Colors.white70),
+                SizedBox(width: 8.0),
+                Text('Record', style: kMenuTextStyle),
+              ],
+            ),
             SizedBox(height: 16.0),
           ],
         ),
@@ -134,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.blueGrey.shade900,
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+            padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 8.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -151,15 +179,79 @@ class _HomeScreenState extends State<HomeScreen> {
                         });
                       },
                     ),
-                    Text('HOME', style: kTextFieldStyle),
+                    Text('Dashboard', style: kTextFieldStyle),
                     Icon(Icons.settings, color: Colors.white70),
                   ],
+                ),
+                SizedBox(height: 16.0),
+                Text('Connected Cones: ${entries.length}',
+                    style: kTextFieldStyle),
+                SizedBox(height: 8.0),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10.0),
+                    child: Container(
+                      color: Colors.blueGrey,
+                      child: ListView(
+                        padding: const EdgeInsets.all(8.0),
+                        children: entries,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  height: 65.0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: RoundedButton(
+                          title: 'Add Cone',
+                          backgroundColor: Colors.lightBlueAccent,
+                          onPress: () {},
+                        ),
+                      ),
+                      SizedBox(width: 16.0),
+                      Flexible(
+                        child: RoundedButton(
+                          title: 'Remove Cone',
+                          backgroundColor: Colors.blueAccent,
+                          onPress: () {},
+                        ),
+                      ),
+                    ],
+                  ),
                 )
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class ConeEntry extends StatelessWidget {
+  ConeEntry({@required this.name, @required this.status});
+
+  final String name;
+  final Status status;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text('$name', style: kTextFieldStyle),
+        ),
+        Expanded(
+          child: Text(
+              'Status: ${status.toString().substring(status.toString().indexOf('.') + 1)}',
+              style: kTextFieldStyle),
+        ),
+      ],
     );
   }
 }

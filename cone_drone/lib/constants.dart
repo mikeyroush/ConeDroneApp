@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 
-const kTitleTextStyle = TextStyle(fontWeight: FontWeight.w900, fontSize: 45.0);
+const kTitleTextStyle = TextStyle(
+  fontWeight: FontWeight.w900,
+  fontSize: 45.0,
+);
+
+const kMenuTextStyle = TextStyle(
+  fontWeight: FontWeight.bold,
+  fontSize: 30.0,
+  color: Colors.white70,
+);
 
 const kTextFieldStyle = TextStyle(color: Colors.white70);
 
