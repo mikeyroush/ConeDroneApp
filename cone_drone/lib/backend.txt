@@ -1,0 +1,23 @@
+Pilots
+   id
+   name
+   email
+   phone
+   instructor
+
+Flyover
+   pilotId
+   activatedCones
+   totalCones
+   timeElapsed
+   lapsArray?
+   avgFlyoverHeight?
+
+Class?
+   list of sessions
+   list of students
+   number of students
+
+Session?
+   students
+   flyovers
