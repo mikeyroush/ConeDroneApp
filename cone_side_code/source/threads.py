@@ -1,5 +1,7 @@
 import bluetooth
 import connection
+import node
+import messages
 
 '''
 listener_thread
@@ -11,7 +13,7 @@ Returns:
 Arguments:
 
 '''    
-def listener_thread(server_sock, connections):
+def listener_thread(server_sock, connections_lock):
 
     print("listener thread launched")
        
@@ -36,7 +38,7 @@ def listener_thread(server_sock, connections):
         connect = connection.Connection(recv_sock, send_sock, address[0], address[1])
         
         # add connection to list
-        connections.append(connect)
+        node.connections.append(connect)
 
 
 '''
@@ -52,9 +54,6 @@ Arguments:
 '''
 def flyover_thread():
 
-    global connections
-    global reset
-    
     while True:
         time.sleep(5)
 
@@ -72,10 +71,71 @@ Arguments:
     socket recv_sock : the client socket for the specific connection we are receiving from
 
 '''
-def message_thread(recv_sock):
+def message_thread(recv_sock, connections_lock, reset_lock):
     
-    global connections
-    global reset
+    while True:
+        
+        # receive incoming messages
+        msg = recv_sock.recv(8)
+        
+        # parse message
+        (msg_type, msg_node, msg_num) = messages.parseMessage(msg)
+        print(msg_type + " received from dronecone" + msg_node)
+        
+        # check if we have handled this before
+        node.message_queue_lock.acquire()
+        if msg_num in node.message_queue:
+            # we already took care of this message, don't worry about it
+            node.message_queue_lock.release()
+            continue
+        node.message_queue_lock.release()
+        
+        # handle message
+        if (msg_type == ("indicate" || "new node" || "node lost")):
+            # pass it on
+        elif (msg_type == "reset"):
+            if (node.name == msg_node):
+                # it's for you
+                reset_lock.acquire()
+                if not node.reset:
+                    if (node.last_reset != msg_num):
+                        # set the reset flag to true
+                        node.reset = True
+                        # record that we reset on this msg's number
+                        # this will save us trouble if the sensor thread handles the reset 
+                        #   before all nodes have processed the reset 
+                        #   ( *** not sure this is an actual case that could occur ***)
+                        node.last_reset = msg_num
+                reset_lock.release()
+            else:
+                # pass it on
+        elif (msg_type == "reset all"):
+            reset_lock.acquire()
+            if not node.reset:
+                if (node.last_reset != msg_num):
+                    # set the reset flag to true
+                    node.reset = True
+                    # record that we reset on this msg's number
+                    # this will save us trouble if the sensor thread handles the reset 
+                    #   before all nodes have processed the reset 
+                    #   ( *** not sure this is an actual case that could occur ***)
+                    node.last_reset = msg_num
+            reset_lock.release()
+            #  pass message on 
+        else:
+            # error
+            print("error, could not understand msg_type")
+            continue
+            
+        # update message queue
+        node.message_queue_lock.acquire()
+        if len(node.message_queue) == 50:
+            node.message_queue.pop(0)
+        if not msg_num in node.message_queue:
+            node.message_queue.append(msg_num)
+        node.message_queue_lock.release()
+        
+        
 
     
 

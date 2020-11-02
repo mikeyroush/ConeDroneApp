@@ -13,18 +13,26 @@ import threads
 
 # LOCAL VARIABLES
 address = ""
+name = ""
 #not sure that we will need this
 #uuid = ""
 server_port = 0x1001    # port that all nodes accept connectoins on 
 server_sock = None      # socket that this node accepts connections on 
 connections = []
 reset = False
+last_reset = ""
+message_queue = []
+
 
 def main():
     
     # define address variable
     address = utils.getBDaddr()
     print("address is " + address)
+    
+    # define name variable
+    name = utils.getName()
+    print("name is " + name)
     
     # set up server socket
     server_sock = utils.establishServerSock(server_port)
@@ -42,21 +50,25 @@ def main():
             connect = connection.Connection(recv_sock, send_sock, address, port)
             connections.append(connect)
 
+    reset_lock = threading.Lock.Lock()
+    connections_lock = threading.Lock.Lock()
+    message_queue_lock = threading.Lock.Lock()
+
     # declare listener and flyover thread 
-    thread0 = threading.Thread(target=threads.listener_thread, args=(server_sock,connections,))
-    #thread1 = threading.Thread(target=threads.flyover_thread, ())
+    thread0 = threading.Thread(target=threads.listener_thread, args=(server_sock,connections_lock,))
+    thread1 = threading.Thread(target=threads.flyover_thread, ())
     
     # declare message threads for all current connections 
-    #for connection in Connections:
-    #    connection.thread = threading.Thread(target=threads.message_thread, (connection.sock))
+    for connection in Connections:
+        connection.thread = threading.Thread(target=threads.message_thread, (connection.sock, connections_lock, reset_lock,))
     
     # start listener and flyover threads 
     thread0.start()
-    #thread1.start()
+    thread1.start()
     
     # start message threads for all connections 
-    #for connection in Connections:
-    #    connection.thread.start()
+    for connection in Connections:
+        connection.thread.start()
 
     # loop forever
     # I'm not sure if I can let the main thread finish or not, since the global variables
