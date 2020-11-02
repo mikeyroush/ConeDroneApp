@@ -8,6 +8,7 @@ Raspberry Pi.
 import os
 import sys
 import bluetooth
+import re
 
 '''
 getBDaddr 
@@ -50,7 +51,7 @@ def nodeScan():
     else:
         print("found " + str(len(target_addresses)) + " devices")
         for address in target_addresses:
-            print(address + " : " + bluetooth.lookup_name(address
+            print(address + " : " + bluetooth.lookup_name(address))
     
     return target_addresses
 
@@ -69,6 +70,7 @@ def establishServerSock(server_port):
     
     server_sock = bluetooth.BluetoothSocket(bluetooth.L2CAP)
     server_sock.bind(("", server_port))
+    server_sock.listen(1)
     return server_sock
 
 
@@ -82,29 +84,28 @@ Returns:
 Arguments:
 
 '''
-def establishConnection(address):
+def establishConnection(address, server_sock):
     
     # set up the socket we will use to connect 
-    client_sock = bluetooth.BluetoothSocket(bluetooth.L2CAP)
+    send_sock = bluetooth.BluetoothSocket(bluetooth.L2CAP)
     
     # server port on other node -- this is standard
     port = 0x1001
     
     # connect to other node 
-    client_sock.connect((address, port))
+    send_sock.connect((address, port))
     
     # introduce yourself
-    sock.send("hello")
+    send_sock.send("hello")
     
-    # listen for and accept reverse connection
-    server_sock.listen(1)
+    # accept reverse connection
     recv_sock,address = server_sock.accept()
     
     # receive acknowledgement
-    ack = server_sock.recv(1024)
+    ack = recv_sock.recv(1024)
     print("received [%s]" % ack)
     
-    return (recv_sock, address[0], address[1])
+    return (recv_sock, send_sock, address[0], address[1])
 
 
 

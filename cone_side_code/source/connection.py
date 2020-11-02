@@ -7,8 +7,9 @@ connections and send data to the phone.
 
 class Connection:
  
-    def __init__(self, sock, port, addr):
-        self.sock = sock
+    def __init__(self, recv_sock, send_sock, port, addr):
+        self.recv_sock = recv_sock
+        self.send_sock = send_sock
         self.addr = addr
         self.port = port
         self.thread = None
