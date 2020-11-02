@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+enum kScreenState { logIn, register }
+enum kState { initialized, loading, error }
+
 const kTitleTextStyle = TextStyle(
   fontWeight: FontWeight.w900,
   fontSize: 45.0,

@@ -1,23 +1,22 @@
-import 'package:cone_drone/screens/welcome_screen.dart';
 import 'package:flutter/material.dart';
-import 'screens/welcome_screen.dart';
-import 'screens/registration_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'package:cone_drone/models/user.dart';
+import 'package:cone_drone/screens/wrapper.dart';
+import 'package:cone_drone/services/auth.dart';
+import 'package:provider/provider.dart';
 
-void main() => runApp(ConeDrone());
+void main() => runApp(MyApp());
 
-class ConeDrone extends StatelessWidget {
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      initialRoute: WelcomeScreen.id,
-      routes: {
-        WelcomeScreen.id: (context) => WelcomeScreen(),
-        RegistrationScreen.id: (context) => RegistrationScreen(),
-        LoginScreen.id: (context) => LoginScreen(),
-        HomeScreen.id: (context) => HomeScreen(),
+    return StreamProvider<MyUser>(
+      create: (_) {
+        return AuthService().user;
       },
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Wrapper(),
+      ),
     );
   }
 }
