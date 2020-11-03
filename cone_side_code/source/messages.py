@@ -14,6 +14,7 @@ INDICATE = 0x1
 NEW_NODE = 0x2
 NODE_LOST = 0x3
 RESET_ALL = 0x4
+ACK = 0x5
 
 '''
 parseMessage
@@ -38,6 +39,8 @@ def parseMessage(msg):
         parsed_msg0 = "node lost"
     elif (msg_type == RESET_ALL):
         parsed_msg0 = "reset all"
+    elif (msg_type == ACK):
+        parsed_msg0 = "ack"
     
     msg_node = int.from_bytes(msg[1:4], "big")
     parsed_msg1 = "dronecone" + str(msg_node)
@@ -61,10 +64,11 @@ Arguments:
     string msg_type : "reset", "indicate", "new node", "node lost", or "reset all"
     string name : hostname of the node ("dronecone" and a number)
 '''
-def craftMessage(msg_type, name):
+def craftMessage(msg_type, name, num=None):
     
     msg_int = 0
     
+    # set first byte with message type
     if (msg_type == "reset"):
         msg_int = msg_int | (RESET << 56)
     elif (msg_type == "indicate"):
@@ -75,15 +79,23 @@ def craftMessage(msg_type, name):
         msg_int = msg_int | (NODE_LOST << 56)
     elif (msg_type == "reset all"):
         msg_int = msg_int | (RESET_ALL << 56)
+    elif (msg_type == "ack"):
+        msg_int = msg_int | (ACK << 56)
     else:
         print("Error: craftMessage cannot understand message type")
     
+    # set bytes 2-4 with node number
     msg_node = int(name[9:])
     msg_int = msg_int | (msg_node << 32)
     
-    #msg_int = msg_int | (int.from_bytes(random.randbytes(4), "big"))
-    msg_int = msg_int | (int.from_bytes(os.urandom(4), "big"))
+    # set final four bytes with random bytes, or given number 
+    if num:
+        # should only occur if ack message is requested
+        msg_int = msg_int | num
+    else:
+        msg_int = msg_int | (int.from_bytes(os.urandom(4), "big"))
     
+    # convert message into bytes
     msg = msg_int.to_bytes(8, "big")
     
     return msg   
