@@ -19,7 +19,7 @@ class Verify extends StatelessWidget {
             children: [
               Text(
                 'Check your email for a verification link.',
-                style: kTitleTextStyle,
+                style: kTitleTextStyle.copyWith(color: Colors.white70),
               ),
               SizedBox(height: 8.0),
               RoundedButton(

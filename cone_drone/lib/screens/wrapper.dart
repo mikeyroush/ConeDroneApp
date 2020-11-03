@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:cone_drone/models/user.dart';
 import 'package:cone_drone/screens/authenticate/authenticate.dart';
-import 'package:cone_drone/screens/home/verify_email.dart';
+import 'package:cone_drone/screens/verify_email.dart';
 import 'package:cone_drone/screens/menu_layout.dart';
 import 'package:cone_drone/screens/error_screen.dart';
 import 'package:cone_drone/screens/loading_screen.dart';

@@ -159,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen>
                           });
                         },
                       ),
-                      Text('Dashboard', style: kTextFieldStyle),
+                      Text('Cone Drone', style: kTextFieldStyle),
                       SizedBox(),
                     ],
                   ),
