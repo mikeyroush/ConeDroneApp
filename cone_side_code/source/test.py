@@ -14,15 +14,6 @@ class Tests(unittest.TestCase):
         result = interpretDistance(400.01)
         self.assertTrue(result) 
 
-    # def test_sensor_data_converter100(self):
-    #     result = convert_sensor_data(100)
-    #     self.assertEqual(result,1)
-    # def test_sensor_data_converter1(self):
-    #     result = convert_sensor_data(1)
-    #     self.assertEqual(result,0.01)
-    # def test_sensor_data_converter390(self):
-    #     result = convert_sensor_data(398.428)
-    #     self.assertEqual(result,3.98428)
 
 
 
@@ -57,6 +48,9 @@ class Tests(unittest.TestCase):
     def test_msg_parser5(self):
         result = parseMessage(b'\x04\x00\x28\x35\x00\x00\x00\x12')
         self.assertEqual(result,("reset all", "dronecone10293", "18"))
+    def test_msg_parser6(self):
+        result = parseMessage(b'\x05\x00\x95\x93\x00\x00\x0f\x3e')
+        self.assertEqual(result,("ack", "dronecone38291", "3902"))
 
 
 #message crafter
@@ -77,8 +71,18 @@ class Tests(unittest.TestCase):
     def test_msg_crafter5(self):
         result = craftMessage("reset all", "dronecone9382934")
         self.assertEqual(int.from_bytes(result[0:4], "big"),0x048f2c16)
+    def test_msg_crafter5(self):
+        result = craftMessage("ack", "dronecone39202", "48923035")
+        self.assertEqual(int.from_bytes(result, "big"),0x0500992202ea819b)
     
     
+
+# expecting: ("ack", "dronecone38291", "3902")
+# msg = b'\0x05\x00\x95\x93\x00\x00\x0f\x3e'
+
+# msg = craftMessage("ack", "dronecone39202", "48923035")
+# expecting: int.from_bytes(msg, "big") == 0x0500992202ea819b
+
 
 
 
