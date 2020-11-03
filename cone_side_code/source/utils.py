@@ -26,6 +26,20 @@ def getBDaddr():
 
 
 '''
+getName
+
+Get the hostname of the Raspberry Pi -- should be "dronecone" and then a three digit number
+
+Returns:
+    string name : hostname of Raspberry Pi
+Arguments:
+    None
+'''
+def getName():
+    name = os.popen("hostname").read().rstrip()
+    
+
+'''
 nodeScan
 
 Create list of discovered node addresses
