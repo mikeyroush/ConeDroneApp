@@ -1,5 +1,4 @@
-import time
-import random
+import os
 
 '''
 This file defines message types and provides a function for parsing messages
@@ -16,10 +15,18 @@ NEW_NODE = 0x2
 NODE_LOST = 0x3
 RESET_ALL = 0x4
 
+'''
+parseMessage
+
+Parses a message and returns a tuple with the type, node, and number
+
+Returns:
+    tuple(string, string, string) parsed_msg : tuple with type, node, and number
+Arguments:
+    bytes msg : the received message, in bytes
+'''
 def parseMessage(msg):
-    
-    parsed_msg = ("", "", "")
-    
+        
     msg_type = msg[0]
     if (msg_type == RESET):
         parsed_msg0 = "reset"
@@ -42,6 +49,18 @@ def parseMessage(msg):
     
     return parsed_msg
     
+    
+'''
+craftMessage
+
+Forms a message given the message type and name 
+
+Returns:
+    bytes msg : the message to be sent, in bytes
+Arguments:
+    string msg_type : "reset", "indicate", "new node", "node lost", or "reset all"
+    string name : hostname of the node ("dronecone" and a number)
+'''
 def craftMessage(msg_type, name):
     
     msg_int = 0
@@ -62,14 +81,10 @@ def craftMessage(msg_type, name):
     msg_node = int(name[9:])
     msg_int = msg_int | (msg_node << 32)
     
-    msg_int = msg_int | (int.from_bytes(random.randbytes(4), "big"))
+    #msg_int = msg_int | (int.from_bytes(random.randbytes(4), "big"))
+    msg_int = msg_int | (int.from_bytes(os.urandom(4), "big"))
     
-    return msg_int.to_bytes(8, "big")
+    msg = msg_int.to_bytes(8, "big")
     
-    
-    
-    
-    
-    
-    
+    return msg   
     
