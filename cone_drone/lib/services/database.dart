@@ -12,7 +12,8 @@ class DatabaseService {
       FirebaseFirestore.instance.collection('pilots');
 
   // update pilot data
-  Future updatePilotData(String name, String email, String phone) async {
+  Future updatePilotData(
+      String name, String email, String phone, String instructorID) async {
     return await pilotCollection.doc(pilotID).set({
       'name': name,
       'email': email,
@@ -31,10 +32,16 @@ class DatabaseService {
     });
   }
 
+  // delete pilot
+  Future deletePilot() async {
+    return await pilotCollection.doc(pilotID).delete();
+  }
+
   // pilot list from snapshot
   List<Pilot> _pilotListFromSnapshot(QuerySnapshot snapshot) {
     return snapshot.docs.map((doc) {
       return Pilot(
+        uid: doc.id ?? '',
         name: doc.data()['name'] ?? '',
         email: doc.data()['email'] ?? '',
         phone: doc.data()['phone'] ?? '',
@@ -53,6 +60,5 @@ class DatabaseService {
   }
 
   // user data from snapshot
-
   // get user doc stream
 }
