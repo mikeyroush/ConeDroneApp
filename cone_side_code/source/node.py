@@ -56,7 +56,7 @@ def main():
 
     # declare listener and flyover thread 
     thread0 = threading.Thread(target=threads.listener_thread, args=(server_sock,connections_lock,))
-    thread1 = threading.Thread(target=threads.flyover_thread, ())
+    thread1 = threading.Thread(target=threads.flyover_thread, (connections_lock, ))
     
     # declare message threads for all current connections 
     for connection in Connections:

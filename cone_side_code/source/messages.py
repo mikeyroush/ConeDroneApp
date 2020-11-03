@@ -17,7 +17,7 @@ def parseMessage(msg):
     
     parsed_msg = ("", "", "")
     
-    msg_type = (msg[0] && 0x00000111)
+    msg_type = (msg[0] & 0x00000111)
     if (msg_type == RESET):
         parsed_msg[0] = "reset"
     elif (msg_type == INDICATE):
@@ -29,10 +29,10 @@ def parseMessage(msg):
     elif (msg_type == RESET_ALL):
         parsed_msg[0] = "reset all"
     
-    msg_node = msg[1:3].decode()
-    parsed_msg[1] = "dronecone" + msg_node
+    msg_node = int.from_bytes(msg[1:4], "big")
+    parsed_msg[1] = "dronecone" + str(msg_node)
     
-    msg_num = msg[5:]
+    msg_num = int.from_bytes(msg[4:])
     parsed_msg[2] = str(msg_num)
     
     return parsed_msg    
