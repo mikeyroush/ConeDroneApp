@@ -1,6 +1,5 @@
 import unittest
 from sensor import interpretDistance
-# from sensor import convert_sensor_data
 from indicator import indicator_led
 from indicator import indicator_flag
 from messages import parseMessage
@@ -13,8 +12,6 @@ class Tests(unittest.TestCase):
     def test_distance_more_than_four_float(self):
         result = interpretDistance(400.01)
         self.assertTrue(result) 
-
-
 
 
     def test_led_true_flyover(self):
@@ -71,7 +68,7 @@ class Tests(unittest.TestCase):
     def test_msg_crafter5(self):
         result = craftMessage("reset all", "dronecone9382934")
         self.assertEqual(int.from_bytes(result[0:4], "big"),0x048f2c16)
-    def test_msg_crafter5(self):
+    def test_msg_crafter6(self):
         result = craftMessage("ack", "dronecone39202", "48923035")
         self.assertEqual(int.from_bytes(result, "big"),0x0500992202ea819b)
     
