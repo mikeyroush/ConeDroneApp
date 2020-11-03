@@ -91,7 +91,7 @@ def craftMessage(msg_type, name, num=None):
     # set final four bytes with random bytes, or given number 
     if num:
         # should only occur if ack message is requested
-        msg_int = msg_int | num
+        msg_int = msg_int | int(num)
     else:
         msg_int = msg_int | (int.from_bytes(os.urandom(4), "big"))
     
