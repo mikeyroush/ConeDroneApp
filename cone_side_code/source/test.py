@@ -1,8 +1,8 @@
 import unittest
 from sensor import interpretDistance
 # from sensor import convert_sensor_data
-# from indicator import indicator_led
-# from indicator import indicator_flag
+from indicator import indicator_led
+from indicator import indicator_flag
 from messages import parseMessage
 from messages import craftMessage
 
@@ -17,18 +17,18 @@ class Tests(unittest.TestCase):
 
 
 
-    # def test_led_true_flyover(self):
-    #     result = indicator_led(flyover_success(5))
-    #     self.assertEqual(result,1)
-    # def test_led_false_flyover(self):
-    #     result = indicator_led(flyover_success(3.998))
-    #     self.assertEqual(result,0)
-    # def test_flag_true_flyover(self):
-    #     result = indicator_flag(flyover_success(5))
-    #     self.assertEqual(result,1)
-    # def test_flag_false_flyover(self):
-    #     result = indicator_flag(flyover_success(3.998))
-    #     self.assertEqual(result,0)
+    def test_led_true_flyover(self):
+        result = indicator_led(True)
+        self.assertEqual(result,1)
+    def test_led_false_flyover(self):
+        result = indicator_led(False)
+        self.assertEqual(result,0)
+    def test_flag_true_flyover(self):
+        result = indicator_flag(True)
+        self.assertEqual(result,1)
+    def test_flag_false_flyover(self):
+        result = indicator_flag(False)
+        self.assertEqual(result,0)
 
 
 #message parser
@@ -77,11 +77,6 @@ class Tests(unittest.TestCase):
     
     
 
-# expecting: ("ack", "dronecone38291", "3902")
-# msg = b'\0x05\x00\x95\x93\x00\x00\x0f\x3e'
-
-# msg = craftMessage("ack", "dronecone39202", "48923035")
-# expecting: int.from_bytes(msg, "big") == 0x0500992202ea819b
 
 
 
