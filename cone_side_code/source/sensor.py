@@ -27,11 +27,12 @@ def checkSensor():
         #if low, wait until high edge then read. 
     
     #pass the result from that read to interpretDistance
+    #when this is scheduled, check it every so often with run_pending. Because 
     
 def interpretDistance(distance):
     #This is written into its own function mostly so unit testing can be done on it...
-    
-    #if distance is above whatever we decide it to be:
+    if (distance > 400): #sensor distance is in cm
+        print("flyover detected, activating indication")
         #call the trigger function
-   
+    
     
