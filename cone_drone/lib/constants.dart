@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum kScreenState { logIn, register }
+enum kScreenState { logIn, register, cone, pilot, record }
 enum kState { initialized, loading, error }
 
 const kTitleTextStyle = TextStyle(
