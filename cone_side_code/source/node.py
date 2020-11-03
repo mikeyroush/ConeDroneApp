@@ -16,7 +16,7 @@ address = ""
 name = ""
 #not sure that we will need this
 #uuid = ""
-server_port = 0x1001    # port that all nodes accept connectoins on 
+server_port = 0x1001    # port that all nodes accept connections on 
 server_sock = None      # socket that this node accepts connections on 
 connections = []
 reset = False
