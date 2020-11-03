@@ -12,12 +12,16 @@ class PilotTile extends StatelessWidget {
       showModalBottomSheet(
         context: context,
         builder: (context) {
-          return Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 60.0,
-              vertical: 20.0,
-            ),
-            child: UpdatePilotForm(pilot: pilot),
+          return ListView(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 60.0,
+                  vertical: 20.0,
+                ),
+                child: UpdatePilotForm(pilot: pilot),
+              ),
+            ],
           );
         },
       );

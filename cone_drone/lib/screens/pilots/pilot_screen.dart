@@ -19,12 +19,16 @@ class PilotScreen extends StatelessWidget {
       showModalBottomSheet(
         context: context,
         builder: (context) {
-          return Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 60.0,
-              vertical: 20.0,
-            ),
-            child: AddPilotForm(),
+          return ListView(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 60.0,
+                  vertical: 20.0,
+                ),
+                child: AddPilotForm(),
+              ),
+            ],
           );
         },
       );

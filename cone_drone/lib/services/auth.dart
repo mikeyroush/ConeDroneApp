@@ -47,7 +47,7 @@ class AuthService {
       //     .updateUserData('0', 'new member', 100);
 
       // sign out
-      signOut();
+      // signOut();
 
       return _userFromFirebaseUser(credential.user);
     } on FirebaseAuthException catch (e) {
