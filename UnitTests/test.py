@@ -4,6 +4,7 @@ from sensor import convert_sensor_data
 from indicator import indicator_led
 from indicator import indicator_flag
 from messages import parseMessage
+from messages import craftMessage
 
 class Tests(unittest.TestCase):
     def test_distance_more_than_four(self):
@@ -68,6 +69,30 @@ class Tests(unittest.TestCase):
     def test_msg_parser5(self):
         result = parseMessage(b'\x04\x00\x28\x35\x00\x00\x00\x12')
         self.assertEqual(result,("reset all", "dronecone10293", "18"))
+
+
+#message crafter
+
+
+    def test_msg_crafter1(self):
+        result = craftMessage("reset", "dronecone123456")
+        self.assertEqual(int.from_bytes(result[0:4], "big"),0x1e240)
+    def test_msg_crafter2(self):
+        result = craftMessage("indicate", "dronecone48394")
+        self.assertEqual(int.from_bytes(result[0:4], "big"),0x0100bd0a)    
+    def test_msg_crafter3(self):
+        result = craftMessage("new node", "dronecone3")
+        self.assertEqual(int.from_bytes(result[0:4], "big"),0x02000003)
+    def test_msg_crafter4(self):
+        result = craftMessage("node lost", "dronecone2304023")
+        self.assertEqual(int.from_bytes(result[0:4], "big"), 0x03232817)
+    def test_msg_crafter5(self):
+        result = craftMessage("reset all", "dronecone9382934")
+        self.assertEqual(int.from_bytes(result[0:4], "big"),0x048f2c16)
+    
+    
+
+
 
 
 if __name__ == '__main__':

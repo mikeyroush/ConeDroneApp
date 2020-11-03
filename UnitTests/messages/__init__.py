@@ -5,6 +5,8 @@ Message format
     bytes 2 - 4 = node number (i.e., in dronecone123, the 123)
     bytes 5 - 8 = message number (random)
 '''
+import random
+import os
 
 RESET = 0x0
 INDICATE = 0x1
@@ -12,8 +14,7 @@ NEW_NODE = 0x2
 NODE_LOST = 0x3
 RESET_ALL = 0x4
 
-def parseMessage(msg):
-    
+def parseMessage(msg):  
     
     
     #msg_type = (msg[0] & 0x00000111)
@@ -40,10 +41,34 @@ def parseMessage(msg):
     
     return parsed_msg    
 
-# expecting: ("reset", "dronecone385", "829483")
-# msg1 = b'\x00\x00\x01\x81\x00\x0c\xa8\x2b'
-# x = parseMessage(msg)
-# print("x:", x)
-# msg2 = b'\x04\x00\x28\x35\x00\x00\x00\x12'
-# x2 = parseMessage(msg2)
-# print("x:", x2)
+def craftMessage(msg_type, name):
+    
+    msg_int = 0
+    
+    if (msg_type == "reset"):
+        msg_int = msg_int | (RESET << 56)
+    elif (msg_type == "indicate"):
+        msg_int = msg_int | (INDICATE << 56)
+    elif (msg_type == "new node"):
+        msg_int = msg_int | (NEW_NODE << 56)
+    elif (msg_type == "node lost"):
+        msg_int = msg_int | (NODE_LOST << 56)
+    elif (msg_type == "reset all"):
+        msg_int = msg_int | (RESET_ALL << 56)
+    else:
+        print("Error: craftMessage cannot understand message type")
+    
+    msg_node = int(name[9:])
+    msg_int = msg_int | (msg_node << 32)
+    
+    msg_int = msg_int | (int.from_bytes(os.urandom(4), "big"))
+    # msg = msg_int.to_bytes(8, "big")
+
+
+    msg = msg_int.to_bytes(8, "big")
+    
+    return msg   
+    
+    # return int.from_bytes(msg[0:4], "big")
+
+
