@@ -15,9 +15,9 @@ class FlightScreen extends StatefulWidget {
 
 class _FlightScreenState extends State<FlightScreen> {
   final _formKey = GlobalKey<FormState>();
-  final Duration refreshRate = Duration(seconds: 1);
+  final Duration refreshRate = Duration(milliseconds: 100);
   Stopwatch _stopwatch = Stopwatch();
-  String timeElapsed = "00:00:00";
+  String timeElapsed = "00:00.0";
   Orientation screenOrientation;
 
   // todo: remove temp array
@@ -28,11 +28,15 @@ class _FlightScreenState extends State<FlightScreen> {
       if (_stopwatch.isRunning) {
         updateStopwatch();
         setState(() {
-          timeElapsed = _stopwatch.elapsed.inHours.toString().padLeft(2, '0') +
+          timeElapsed = (_stopwatch.elapsed.inMinutes % 60)
+                  .toString()
+                  .padLeft(2, '0') +
               ":" +
-              (_stopwatch.elapsed.inMinutes % 60).toString().padLeft(2, '0') +
-              ":" +
-              (_stopwatch.elapsed.inSeconds % 60).toString().padLeft(2, '0');
+              (_stopwatch.elapsed.inSeconds % 60).toString().padLeft(2, '0') +
+              "." +
+              ((_stopwatch.elapsed.inMilliseconds % 1000) / 100)
+                  .floor()
+                  .toString();
         });
       }
     });
@@ -67,7 +71,7 @@ class _FlightScreenState extends State<FlightScreen> {
                     child: Center(
                       child: Text(
                         timeElapsed,
-                        style: kTitleTextStyle.copyWith(color: Colors.white70),
+                        style: kTimerTextStyle.copyWith(color: Colors.white70),
                       ),
                     ),
                   ),
@@ -96,7 +100,7 @@ class _FlightScreenState extends State<FlightScreen> {
                                   ? setState(() => _stopwatch.stop())
                                   : setState(() {
                                       _stopwatch.reset();
-                                      timeElapsed = "00:00:00";
+                                      timeElapsed = "00:00.0";
                                     });
                             },
                           ),

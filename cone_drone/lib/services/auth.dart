@@ -64,7 +64,7 @@ class AuthService {
   // check email verification
   // note: this might become redundant with the userChanges stream in a future update
   void checkVerification() {
-    Timer(Duration(seconds: 1), () async {
+    Timer(refreshRate, () async {
       if (_auth.currentUser != null && !_auth.currentUser.emailVerified) {
         checkVerification();
         _auth.currentUser.reload();

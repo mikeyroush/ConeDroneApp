@@ -3,6 +3,12 @@ import 'package:flutter/material.dart';
 enum kScreenState { logIn, register, cone, pilot, record }
 enum kState { initialized, loading, error }
 
+const kTimerTextStyle = TextStyle(
+  fontWeight: FontWeight.w900,
+  fontSize: 50.0,
+  fontFamily: 'Inconsolata',
+);
+
 const kTitleTextStyle = TextStyle(
   fontWeight: FontWeight.w900,
   fontSize: 45.0,
