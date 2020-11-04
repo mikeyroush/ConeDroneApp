@@ -18,6 +18,7 @@ class _FlightScreenState extends State<FlightScreen> {
   final Duration refreshRate = Duration(seconds: 1);
   Stopwatch _stopwatch = Stopwatch();
   String timeElapsed = "00:00:00";
+  Orientation screenOrientation;
 
   // todo: remove temp array
   final List<String> pilots = ['pilot 1', 'pilot 2', 'pilot 3'];
@@ -45,11 +46,13 @@ class _FlightScreenState extends State<FlightScreen> {
 
   @override
   Widget build(BuildContext context) {
+    screenOrientation = MediaQuery.of(context).orientation;
+
     return Expanded(
       child: Column(
         children: [
           Expanded(
-            flex: 3,
+            flex: (screenOrientation == Orientation.portrait) ? 3 : 1,
             child: Container(
               padding: const EdgeInsets.all(16.0),
               width: double.infinity,
@@ -60,40 +63,46 @@ class _FlightScreenState extends State<FlightScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    timeElapsed,
-                    style: kTitleTextStyle.copyWith(color: Colors.white70),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        timeElapsed,
+                        style: kTitleTextStyle.copyWith(color: Colors.white70),
+                      ),
+                    ),
                   ),
                   // SizedBox(height: 8.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Flexible(
-                        child: RoundedButton(
-                          title: 'Start',
-                          backgroundColor: Colors.lightBlueAccent,
-                          onPress: () {
-                            _stopwatch.start();
-                            updateStopwatch();
-                          },
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: RoundedButton(
+                            title: 'Start',
+                            backgroundColor: Colors.lightBlueAccent,
+                            onPress: () {
+                              _stopwatch.start();
+                              updateStopwatch();
+                            },
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 8.0),
-                      Flexible(
-                        child: RoundedButton(
-                          title: _stopwatch.isRunning ? 'Stop' : 'Reset',
-                          backgroundColor: Colors.redAccent,
-                          onPress: () {
-                            _stopwatch.isRunning
-                                ? setState(() => _stopwatch.stop())
-                                : setState(() {
-                                    _stopwatch.reset();
-                                    timeElapsed = "00:00:00";
-                                  });
-                          },
+                        SizedBox(width: 8.0),
+                        Flexible(
+                          child: RoundedButton(
+                            title: _stopwatch.isRunning ? 'Stop' : 'Reset',
+                            backgroundColor: Colors.redAccent,
+                            onPress: () {
+                              _stopwatch.isRunning
+                                  ? setState(() => _stopwatch.stop())
+                                  : setState(() {
+                                      _stopwatch.reset();
+                                      timeElapsed = "00:00:00";
+                                    });
+                            },
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   )
                 ],
               ),
@@ -101,7 +110,7 @@ class _FlightScreenState extends State<FlightScreen> {
           ),
           SizedBox(height: 16.0),
           Expanded(
-            flex: 5,
+            flex: (screenOrientation == Orientation.portrait) ? 5 : 1,
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
