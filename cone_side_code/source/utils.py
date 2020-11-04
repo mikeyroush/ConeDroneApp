@@ -11,6 +11,20 @@ import bluetooth
 import re
 
 '''
+enableBluetooth
+
+Bring up hci0
+
+Returns:
+    int code : error code returned by command
+Arguments:
+    None
+'''
+def enableBluetooth():
+    code = os.system("hciconfig hci0 up 2>/dev/null")
+    return code
+
+'''
 getBDaddr 
 
 Get the Raspberry Pi's BD address
@@ -98,7 +112,7 @@ Returns:
 Arguments:
 
 '''
-def establishConnection(address, server_sock):
+def establishConnection(address, server_sock, name):
     
     # set up the socket we will use to connect 
     send_sock = bluetooth.BluetoothSocket(bluetooth.L2CAP)
@@ -110,7 +124,7 @@ def establishConnection(address, server_sock):
     send_sock.connect((address, port))
     
     # introduce yourself
-    send_sock.send("hello")
+    send_sock.sendall(name)
     
     # accept reverse connection
     recv_sock,address = server_sock.accept()
