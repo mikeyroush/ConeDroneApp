@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cone_drone/models/user.dart';
 import 'package:cone_drone/services/database.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final Duration refreshRate = Duration(seconds: 1);
 
   // create user object based on Firebase User
   MyUser _userFromFirebaseUser(User user) {
@@ -14,7 +16,7 @@ class AuthService {
 
   // auth change user stream
   Stream<MyUser> get user {
-    return _auth.authStateChanges().map(_userFromFirebaseUser);
+    return _auth.userChanges().map(_userFromFirebaseUser);
   }
 
   // sign in Anonymously?
@@ -60,6 +62,18 @@ class AuthService {
   }
 
   // check email verification
+  // note: this might become redundant with the userChanges stream in a future update
+  void checkVerification() {
+    Timer(Duration(seconds: 1), () async {
+      if (_auth.currentUser != null && !_auth.currentUser.emailVerified) {
+        checkVerification();
+        _auth.currentUser.reload();
+        print('verification: ${_auth.currentUser.emailVerified}');
+      }
+    });
+  }
+
+  // return current verification status
   bool isVerified() {
     return _auth.currentUser.emailVerified;
   }
