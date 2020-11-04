@@ -5,7 +5,8 @@ import 'package:cone_drone/models/pilot.dart';
 class DatabaseService {
   final String instructorID;
   final String pilotID;
-  DatabaseService({this.instructorID, this.pilotID});
+  final String flightID;
+  DatabaseService({this.instructorID, this.pilotID, this.flightID});
 
   // collection reference
   final CollectionReference pilotCollection =
@@ -58,6 +59,8 @@ class DatabaseService {
         .snapshots()
         .map(_pilotListFromSnapshot);
   }
+
+  //
 
   // user data from snapshot
   // get user doc stream
