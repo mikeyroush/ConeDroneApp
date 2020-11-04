@@ -11,7 +11,8 @@ Thread that listens for and accepts new connections, and sets up reverse connect
 Returns:
 
 Arguments:
-
+    socket server_sock : socket we are listening for connections on 
+    threading.Lock.Lock connections_lock : lock acquired when accessing the connections list
 '''    
 def listener_thread(server_sock, connections_lock):
 
@@ -32,14 +33,34 @@ def listener_thread(server_sock, connections_lock):
         send_sock.connect((str(address[0]), 0x1001))
         
         # send acknowledgement
-        send_sock.send("acknowledged")
+        send_sock.sendall("acknowledged")
+        
+        # new connection name 
+        name = "dronecone" + str(data)
         
         # instantiate new connection 
-        connect = connection.Connection(recv_sock, send_sock, address[0], address[1])
+        connect = connection.Connection(recv_sock, send_sock, address[0], address[1], name)
         
         # add connection to list
+        connections_lock.aqcuire()
         node.connections.append(connect)
-
+        
+        # send new node message
+        msg_new_node = messages.craftMessage("new node", node.name, name2=connect.name)
+        msg_num = int.from_bytes(msg_new_node[4:], "big")
+        
+        for conn in node.connections:
+            # do not send message back to whomst've just connected with us
+            if conn == connect:
+                continue
+            conn.connectionSend(msg_new_node)
+            
+            unack_msg_lock.acquire()
+            node.unack_msgs[(conn, msg_num, msg_new_node)] = 0
+            unack_msg_lock.release()
+        connections_lock.release()
+        
+        
 
 '''
 flyover_thread
@@ -50,12 +71,35 @@ flyover message to other cones
 Returns:
 
 Arguments:
+    threading.Lock.Lock() connections_lock : lock acquired when accessing the connections list
+    threading.Lock.Lock() reset_lock : lock acquired when accessing the reset flag
+    threading.Lock.Lock() unack_msg_lock : lock acquired when accessing the unacknowledged message dictionary
 
 '''
-def flyover_thread():
+def flyover_thread(connections_lock, reset_lock, unack_msg_lock):
 
     while True:
-        time.sleep(5)
+        reset_lock.acquire()
+        if node.reset:
+            # do reset stuff
+            node.reset = False
+            reset_lock.release()
+        else:
+            reset_lock.release()
+            # check for indication
+            if indicate:
+                # create the indication message
+                msg = messages.craftMessage("indicate", node.name)
+                msg_num = int.from_bytes(msg[4:], "big")
+                
+                # tell the whole world
+                connections_lock.acquire()
+                for connect in node.connections:
+                    connect.connectionSend(msg)
+                    unack_msg_lock.acquire()
+                    node.unack_msgs[(connect, msg_num, msg)] = 0
+                    unack_msg_lock.release()
+                connections.lock_release()
 
 
 '''
@@ -71,28 +115,76 @@ Arguments:
     socket recv_sock : the client socket for the specific connection we are receiving from
 
 '''
-def message_thread(recv_sock, connections_lock, reset_lock):
+def message_thread(connect, connections_lock, reset_lock, unack_msg_lock):
     
     while True:
         
         # receive incoming messages
-        msg = recv_sock.recv(8)
+        msg = connect.recv_sock.recv(8)
         
         # parse message
-        (msg_type, msg_node, msg_num) = messages.parseMessage(msg)
+        (msg_type, msg_node, msg_num, "") = messages.parseMessage(msg)
         print(msg_type + " received from dronecone" + msg_node)
         
         # check if we have handled this before
         node.message_queue_lock.acquire()
-        if msg_num in node.message_queue:
-            # we already took care of this message, don't worry about it
+        msg_processed = False
+        for saved_msg in node.message_queue:
+            # if msg_num in the queue, we have received this message before
+            if saved_msg[0] == msg_num:
+                # send acknowledgement
+                msg_ack = messages.craftMessage("ack", node.address, msg_num)
+                connect.connectionSend(msg_ack)  
+                # we have now processed the message
+                msg_processed = True
+                break
+            
+        # if we dealt with the message, skip the rest of this
+        if msg_processed:
             node.message_queue_lock.release()
             continue
-        node.message_queue_lock.release()
+        node.msg_queue_lock.release()
         
+            '''
+            # if msg_num in the queue, we have received this message before
+            if saved_msg[0] == msg_num:
+                # check if the message is from a connection we received from previously
+                if saved_msg[1] == connect.name:
+                    # the other node did not receive our ack, so resend the ack
+                    msg_ack = messages.craftMessage("ack", node.address, msg_num)
+                    connect.connectionSend(msg_ack)                  
+                msg_processed = True
+                break
+            
+        # if we dealt with the message, skip the rest
+        if msg_processed:
+            node.message_queue_lock.release()
+            continue
+        else:
+            # this is a new message, put in queue
+            if len(node.message_queue) == node.MSG_Q_LEN:
+                node.message_queue.pop(0)
+            node.message_queue.append((msg_num, connect.name))
+        node.message_queue_lock.release()
+        '''
         # handle message
+        
+        # indicate, new node, and node lost are all for the phone, never for node
         if (msg_type == ("indicate" || "new node" || "node lost")):
             # pass it on
+            connections_lock.acquire()
+            for conn in node.connections:
+                # do not send message back to whomst've sent it 
+                if conn == connect:
+                    continue
+                connectionSend(msg)
+            conncetions_lock.release()
+            
+            # send ack
+            msg_ack = messages.craftMessage("ack", node.address, msg_num)
+            connect.connectionSend(msg_ack)
+            
+        # could be for us, we should check
         elif (msg_type == "reset"):
             if (node.name == msg_node):
                 # it's for you
@@ -107,8 +199,22 @@ def message_thread(recv_sock, connections_lock, reset_lock):
                         #   ( *** not sure this is an actual case that could occur ***)
                         node.last_reset = msg_num
                 reset_lock.release()
+                
             else:
                 # pass it on
+                connections_lock.acquire()
+                for conn in node.connections:
+                    # do not send message back to whomst've sent it 
+                    if conn == connect:
+                        continue
+                    connectionSend(msg)
+                conncetions_lock.release()
+                
+            # send ack
+            msg_ack = messages.craftMessage("ack", node.address, msg_num)
+            connect.connectionSend(msg_ack)
+            
+        # is for us and everyone else
         elif (msg_type == "reset all"):
             reset_lock.acquire()
             if not node.reset:
@@ -121,20 +227,36 @@ def message_thread(recv_sock, connections_lock, reset_lock):
                     #   ( *** not sure this is an actual case that could occur ***)
                     node.last_reset = msg_num
             reset_lock.release()
+            
             #  pass message on 
+            connections_lock.acquire()
+            for conn in node.connections:
+                # do not send message back to whomst've sent it 
+                if conn == connect:
+                    continue
+                connectionSend(msg)
+            conncetions_lock.release()
+            
+            # send ack
+            msg_ack = messages.craftMessage("ack", node.address, msg_num)
+            connect.connectionSend(msg_ack)
+            
+        # just an ack, we don't need to respond with anything
+        elif (msg_type == "ack"):
+            # find the message in the unacknowledged messages 
+            unack_msgs_lock.acquire()
+            for tup in node.unack_msgs.copy():
+                if (tup[0].addr == connect.addr) and (tup[1] == msg_num):
+                    # message found, remove from dictionary
+                    node.unack_msgs.pop(tup)
+                    break
+            unack_msgs_lock.release()
+            
         else:
             # error
             print("error, could not understand msg_type")
             continue
             
-        # update message queue
-        node.message_queue_lock.acquire()
-        if len(node.message_queue) == 50:
-            node.message_queue.pop(0)
-        if not msg_num in node.message_queue:
-            node.message_queue.append(msg_num)
-        node.message_queue_lock.release()
-        
         
 
     

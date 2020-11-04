@@ -45,10 +45,14 @@ def parseMessage(msg):
     msg_node = int.from_bytes(msg[1:4], "big")
     parsed_msg1 = "dronecone" + str(msg_node)
     
-    msg_num = int.from_bytes(msg[4:], "big")
+    msg_num_full = int.from_bytes(msg[4:], "big")
+    msg_num = (msg_num_full & 0x000FFF)
     parsed_msg2 = str(msg_num)
     
-    parsed_msg = (parsed_msg0, parsed_msg1, parsed_msg2)
+    msg_num2 = (msg_num_full & 0xFFF000) >> 12
+    parsed_msg3 = str(msg_num2)
+    
+    parsed_msg = (parsed_msg0, parsed_msg1, parsed_msg2, parsed_msg3)
     
     return parsed_msg
     
@@ -64,7 +68,7 @@ Arguments:
     string msg_type : "reset", "indicate", "new node", "node lost", or "reset all"
     string name : hostname of the node ("dronecone" and a number)
 '''
-def craftMessage(msg_type, name, num=None):
+def craftMessage(msg_type, name, num=None, name2=None):
     
     msg_int = 0
     
@@ -83,6 +87,13 @@ def craftMessage(msg_type, name, num=None):
         msg_int = msg_int | (ACK << 56)
     else:
         print("Error: craftMessage cannot understand message type")
+    
+    # set new or lost node number
+    if name2:
+        # should only occur for new node or lost node messages
+        msg_node2 = int(name2[9:])
+        msg_int = msg_int | (msg_node2 << 44)
+        
     
     # set bytes 2-4 with node number
     msg_node = int(name[9:])
