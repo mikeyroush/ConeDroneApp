@@ -61,22 +61,22 @@ def main():
         for address in target_addresses:
             print("establishing connection with " + address)
             (recv_sock,send_sock,address,port) = utils.establishConnection(address, server_sock, name)
-            connect = connection.Connection(recv_sock, send_sock, address, port)
+            connect = connection.Connection(recv_sock, send_sock, address, port, name)
             connections.append(connect)
 
     # locks for synchronization
-    reset_lock = threading.Lock.Lock()
-    connections_lock = threading.Lock.Lock()
-    message_queue_lock = threading.Lock.Lock()
-    unack_msgs_lock = threading.Lock.Lock()
+    reset_lock = threading.Lock()
+    connections_lock = threading.Lock()
+    message_queue_lock = threading.Lock()
+    unack_msgs_lock = threading.Lock()
 
     # declare listener and flyover thread 
     thread0 = threading.Thread(target=threads.listener_thread, args=(server_sock,connections_lock,))
-    thread1 = threading.Thread(target=threads.flyover_thread, (connections_lock, reset_lock,unack_msg_lock,))
+    thread1 = threading.Thread(target=threads.flyover_thread, args=(connections_lock, reset_lock,unack_msgs_lock,))
     
     # declare message threads for all current connections 
     for connect in connections:
-        connect.thread = threading.Thread(target=threads.message_thread, (connect, connections_lock, reset_lock,unack_msg_lock,))
+        connect.thread = threading.Thread(target=threads.message_thread, args=(connect, connections_lock, reset_lock,unack_msgs_lock,))
     
     # start listener and flyover threads 
     thread0.start()

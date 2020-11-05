@@ -36,16 +36,17 @@ def listener_thread(server_sock, connections_lock):
         send_sock.sendall("acknowledged")
         
         # new connection name 
-        name = "dronecone" + str(data)
+        new_name = "dronecone" + str(int.from_bytes(data, "big"))
         
         # instantiate new connection 
-        connect = connection.Connection(recv_sock, send_sock, address[0], address[1], name)
+        connect = connection.Connection(recv_sock, send_sock, address[0], address[1], new_name)
         
         # add connection to list
-        connections_lock.aqcuire()
+        connections_lock.acquire()
         node.connections.append(connect)
         
         # send new node message
+        print(node.name)
         msg_new_node = messages.craftMessage("new node", node.name, name2=connect.name)
         msg_num = int.from_bytes(msg_new_node[4:], "big")
         
@@ -55,9 +56,9 @@ def listener_thread(server_sock, connections_lock):
                 continue
             conn.connectionSend(msg_new_node)
             
-            unack_msg_lock.acquire()
+            unack_msgs_lock.acquire()
             node.unack_msgs[(conn, msg_num, msg_new_node)] = 0
-            unack_msg_lock.release()
+            unack_msgs_lock.release()
         connections_lock.release()
         
         
@@ -73,11 +74,12 @@ Returns:
 Arguments:
     threading.Lock.Lock() connections_lock : lock acquired when accessing the connections list
     threading.Lock.Lock() reset_lock : lock acquired when accessing the reset flag
-    threading.Lock.Lock() unack_msg_lock : lock acquired when accessing the unacknowledged message dictionary
+    threading.Lock.Lock() unack_msgs_lock : lock acquired when accessing the unacknowledged message dictionary
 
 '''
-def flyover_thread(connections_lock, reset_lock, unack_msg_lock):
+def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
 
+    '''
     while True:
         reset_lock.acquire()
         if node.reset:
@@ -96,10 +98,13 @@ def flyover_thread(connections_lock, reset_lock, unack_msg_lock):
                 connections_lock.acquire()
                 for connect in node.connections:
                     connect.connectionSend(msg)
-                    unack_msg_lock.acquire()
+                    unack_msgs_lock.acquire()
                     node.unack_msgs[(connect, msg_num, msg)] = 0
-                    unack_msg_lock.release()
+                    unack_msgs_lock.release()
                 connections.lock_release()
+    '''
+    while True:
+        pass
 
 
 '''
@@ -115,7 +120,7 @@ Arguments:
     socket recv_sock : the client socket for the specific connection we are receiving from
 
 '''
-def message_thread(connect, connections_lock, reset_lock, unack_msg_lock):
+def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock):
     
     while True:
         
@@ -123,7 +128,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msg_lock):
         msg = connect.recv_sock.recv(8)
         
         # parse message
-        (msg_type, msg_node, msg_num, "") = messages.parseMessage(msg)
+        msg_type, msg_node, msg_num, _ = messages.parseMessage(msg)
         print(msg_type + " received from dronecone" + msg_node)
         
         # check if we have handled this before
@@ -145,32 +150,10 @@ def message_thread(connect, connections_lock, reset_lock, unack_msg_lock):
             continue
         node.msg_queue_lock.release()
         
-            '''
-            # if msg_num in the queue, we have received this message before
-            if saved_msg[0] == msg_num:
-                # check if the message is from a connection we received from previously
-                if saved_msg[1] == connect.name:
-                    # the other node did not receive our ack, so resend the ack
-                    msg_ack = messages.craftMessage("ack", node.address, msg_num)
-                    connect.connectionSend(msg_ack)                  
-                msg_processed = True
-                break
-            
-        # if we dealt with the message, skip the rest
-        if msg_processed:
-            node.message_queue_lock.release()
-            continue
-        else:
-            # this is a new message, put in queue
-            if len(node.message_queue) == node.MSG_Q_LEN:
-                node.message_queue.pop(0)
-            node.message_queue.append((msg_num, connect.name))
-        node.message_queue_lock.release()
-        '''
         # handle message
         
         # indicate, new node, and node lost are all for the phone, never for node
-        if (msg_type == ("indicate" || "new node" || "node lost")):
+        if (msg_type == "indicate" or msg_type == "new node" or msg_type == "node lost"):
             # pass it on
             connections_lock.acquire()
             for conn in node.connections:

@@ -21,8 +21,9 @@ Arguments:
     None
 '''
 def enableBluetooth():
-    code = os.system("hciconfig hci0 up 2>/dev/null")
+    code = os.system("hciconfig hci0 up piscan 2>/dev/null")
     return code
+
 
 '''
 getBDaddr 
@@ -51,6 +52,7 @@ Arguments:
 '''
 def getName():
     name = os.popen("hostname").read().rstrip()
+    return name 
     
 
 '''
@@ -65,12 +67,13 @@ Arguments:
 '''
 def nodeScan():
     target_addresses = []
-    target_name_pattern = re.compile("^chris*")
-    #target_name_pattern = re.compile("^dronecone*")
+    #target_name_pattern = re.compile("^chris*")
+    target_name_pattern = re.compile("^dronecone*")
 
     nearby_devices = bluetooth.discover_devices()
 
     for bdaddr in nearby_devices:
+        print(bluetooth.lookup_name(bdaddr))
         if target_name_pattern.match(bluetooth.lookup_name(bdaddr)):
             target_addresses.append(bdaddr)
 
@@ -124,7 +127,7 @@ def establishConnection(address, server_sock, name):
     send_sock.connect((address, port))
     
     # introduce yourself
-    send_sock.sendall(name)
+    send_sock.sendall(int(name[9:]).to_bytes(8, "big"))
     
     # accept reverse connection
     recv_sock,address = server_sock.accept()
