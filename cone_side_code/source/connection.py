@@ -22,12 +22,4 @@ class Connection:
     def connectionSend(self, message):
         print("sending message " + str(message))
         self.send_sock.sendall(message)
-        
-        #TODO: acknowledgement handling, resending on fail
-        '''
-        if ack:
-            if recv_sock is None:
-                print("must provide reply_sock to receive acknowledgement")
-            else:
-                ack = recv_sock.recv(1024)
-        '''
+    

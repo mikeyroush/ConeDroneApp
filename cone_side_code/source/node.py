@@ -1,7 +1,7 @@
 '''
 
-This file defines the core functionality of the node. This file is entrypoint
-for all of the node's code. 
+This file defines the core functionality of the node, including all threads that 
+are run by the node. This file is entrypoint for all of the node's code. 
 
 '''
 
@@ -9,26 +9,32 @@ import bluetooth
 import utils
 import connection
 import threading
-#import threads
 import time
 import sys
 import messages
 
-# LOCAL VARIABLES
-address = ""
-name = ""
-#not sure that we will need this
-#uuid = ""
-server_port = 0x1001    # port that all nodes accept connectoins on 
+# global VARIABLES
+address = ""            # not modified after definition
+name = ""               # not modified after definition
+server_port = 0x1001    # constant, port that all nodes accept connectoins on 
 server_sock = None      # socket that this node accepts connections on 
-connections = []
-reset = False
-last_reset = ""
-message_queue = []
-MSG_Q_LEN = 50
-unack_msgs = {}
+connections = []        # modified
+reset = False           # modified
+last_reset = ""         # modified
+message_queue = []      # modified 
+MSG_Q_LEN = 50          # constant
+unack_msgs = {}         # modified 
 
+'''
+main
 
+The main execution thread for the node. After setup, this thread handles the unacknowledged messages queue.
+
+Returns:
+    None
+Arguments:
+    None
+'''
 def main():
 
     global message_queue
@@ -75,15 +81,12 @@ def main():
     unack_msgs_lock = threading.Lock()
 
     # declare listener and flyover thread 
-    #thread0 = threading.Thread(target=threads.listener_thread, args=(server_sock,connections_lock,name,unack_msgs_lock,message_queue_lock,reset_lock,))
     thread0 = threading.Thread(target=listener_thread, args=(server_sock,connections_lock,name,unack_msgs_lock,message_queue_lock,reset_lock,))
 
-    #thread1 = threading.Thread(target=threads.flyover_thread, args=(connections_lock, reset_lock,unack_msgs_lock,))
     thread1 = threading.Thread(target=flyover_thread, args=(connections_lock, reset_lock,unack_msgs_lock,))
 
     # declare message threads for all current connections 
     for connect in connections:
-        #connect.thread = threading.Thread(target=threads.message_thread, args=(connect, connections_lock, reset_lock,unack_msgs_lock,message_queue_lock,name,))
         connect.thread = threading.Thread(target=message_thread, args=(connect, connections_lock, reset_lock,unack_msgs_lock,message_queue_lock,name,))
     
     # start listener and flyover threads 
@@ -94,9 +97,7 @@ def main():
     for connect in connections:
         connect.thread.start()
 
-    # loop forever
-    # I'm not sure if I can let the main thread finish or not, since the global variables
-    #   are defined here
+    # main thread becomes the thread that maintains the unack_msgs dictionary
     while True:
     
         time.sleep(3)
@@ -109,9 +110,7 @@ def main():
             if (unack_msgs[tup] == 10):
                 # close the connection
                 print("node is lost: " + tup[0].name)
-                #connections_lock.acquire()
                 tup[0].connectionClose()
-                #connections_lock.release()
                 
                 # remove the current message from unack_msgs
                 unack_msgs.pop(tup)
@@ -124,20 +123,17 @@ def main():
                 # tell the phone that this connection doesn't exist any longer
                 msg_node_lost = messages.craftMessage("node lost", name, name2=tup[0].name)
                 msg_num = int.from_bytes(msg_node_lost[4:], "big")
-                #connections_lock.acquire()
-                #for connect in connections.copy():
                 for connect in connections.copy():
                     if connect == tup[0]:
                         connections.remove(connect)
                         continue
                     connect.connectionSend(msg_node_lost)
                     unack_msgs_lock.acquire()
-                    #node.unack_msgs[(conn, msg_num, msg_new_node)] = 0
                     unack_msgs[(conn, msg_num, msg_node_lost)] = 0
                     unack_msgs_lock.release()
                 
                 continue
-                #connections_lock.release()
+                
             # if the iteration value is positive and even, resend the message
             if ((unack_msgs[tup] % 2) == 0) and (unack_msgs[tup] != 0):
                 # resend the message
@@ -149,12 +145,6 @@ def main():
         print("main thread loop end")
 
 
-
-
-
-
-
-# this might get deleted
 '''
 listener_thread
 
@@ -209,7 +199,6 @@ def listener_thread(server_sock, connections_lock, name, unack_msgs_lock, messag
         
         # add connection to list
         connections_lock.acquire()
-        #node.connections.append(connect)
         connections.append(connect)
         connections_lock.release()
         
@@ -218,17 +207,14 @@ def listener_thread(server_sock, connections_lock, name, unack_msgs_lock, messag
         msg_new_node = messages.craftMessage("new node", name, name2=connect.name)
         msg_num = int.from_bytes(msg_new_node[4:], "big")
         
-        #for conn in node.connections.copy():
         for conn in connections.copy():
-            # do not send message back to whomst've just connected with us
-            #if conn == connect:
-            #    continue
+            # send the new node message
             conn.connectionSend(msg_new_node)
+            
+            # add to unack_msgs
             unack_msgs_lock.acquire()
-            #node.unack_msgs[(conn, msg_num, msg_new_node)] = 0
             unack_msgs[(conn, msg_num, msg_new_node)] = 0
             unack_msgs_lock.release()
-        #connections_lock.release()
         
         print("listener thread loop end")
 
@@ -241,10 +227,9 @@ flyover message to other cones
 Returns:
 
 Arguments:
-    threading.Lock.Lock() connections_lock : lock acquired when accessing the connections list
-    threading.Lock.Lock() reset_lock : lock acquired when accessing the reset flag
-    threading.Lock.Lock() unack_msgs_lock : lock acquired when accessing the unacknowledged message dictionary
-
+    threading.Lock() connections_lock : lock acquired when accessing the connections list
+    threading.Lock() reset_lock : lock acquired when accessing the reset flag
+    threading.Lock() unack_msgs_lock : lock acquired when accessing the unacknowledged message dictionary
 '''
 def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
 
@@ -286,8 +271,12 @@ messages. Message parsing is also done in this thread.
 Returns:
 
 Arguments:
-    socket recv_sock : the client socket for the specific connection we are receiving from
-
+    Connection connect : connection we are handling messages from in this thread
+    threading.Lock() connections_lock : lock acquired when accessing the connections list
+    threading.Lock() reset_lock : lock acquired when accessing the reset flag
+    threading.Lock() unack_msgs_lock : lock acquired when accessing the unacknowledged message dictionary
+    threading.Lock() message_queue_lock : lock acquired when accessing the messages_queue
+    string name : name of this node
 '''
 def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, message_queue_lock, name):
     
@@ -313,7 +302,6 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
         # check if we have handled this before
         message_queue_lock.acquire()
         msg_processed = False
-        #for saved_msg in node.message_queue:
         for saved_msg in message_queue:    
             # if msg_num in the queue, we have received this message before
             if saved_msg[0] == msg_num:
@@ -336,14 +324,13 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
         # indicate, new node, and node lost are all for the phone, never for node
         if (msg_type == "indicate" or msg_type == "new node" or msg_type == "node lost"):
             # pass it on
-            #connections_lock.acquire()
-            #for conn in node.connections:
             for conn in connections:
                 # do not send message back to whomst've sent it 
                 if conn == connect:
                     continue
+                
+                # send message
                 connectionSend(msg)
-            #connections_lock.release()
             
             # send ack
             msg_ack = messages.craftMessage("ack", name, msg_num)
@@ -354,31 +341,26 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             if (name == msg_node):
                 # it's for you
                 reset_lock.acquire()
-                #if not node.reset:
                 if not reset:
-                    #if (node.last_reset != msg_num):
                     if (last_reset != msg_num):
                         # set the reset flag to true
-                        #node.reset = True
                         reset = True
                         # record that we reset on this msg's number
                         # this will save us trouble if the sensor thread handles the reset 
                         #   before all nodes have processed the reset 
                         #   ( *** not sure this is an actual case that could occur ***)
-                        #node.last_reset = msg_num
                         last_reset = msg_num
                 reset_lock.release()
                 
             else:
                 # pass it on
-                #connections_lock.acquire()
-                #for conn in node.connections:
                 for conn in connections:
                     # do not send message back to whomst've sent it 
                     if conn == connect:
                         continue
+                    
+                    # send message
                     connectionSend(msg)
-                #conncetions_lock.release()
                 
             # send ack
             msg_ack = messages.craftMessage("ack", name, msg_num)
@@ -387,29 +369,25 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
         # is for us and everyone else
         elif (msg_type == "reset all"):
             reset_lock.acquire()
-            #if not node.reset:
             if not reset:
-                #if (node.last_reset != msg_num):
                 if (last_reset != msg_num):
                     # set the reset flag to true
-                    #node.reset = True
                     reset = True
                     # record that we reset on this msg's number
                     # this will save us trouble if the sensor thread handles the reset 
                     #   before all nodes have processed the reset 
                     #   ( *** not sure this is an actual case that could occur ***)
-                    #node.last_reset = msg_num
                     last_reset = msg_num
             reset_lock.release()
             
             #  pass message on 
-            #connections_lock.acquire()
             for conn in connections:
                 # do not send message back to whomst've sent it 
                 if conn == connect:
                     continue
+                
+                # send message
                 connectionSend(msg)
-            #conncetions_lock.release()
             
             # send ack
             msg_ack = messages.craftMessage("ack", name, msg_num)
@@ -420,12 +398,10 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             print("handling ack")
             # find the message in the unacknowledged messages 
             unack_msgs_lock.acquire()
-            #for tup in node.unack_msgs.copy():
             for tup in unack_msgs.copy():
                 if (tup[0].name == connect.name) and (str(tup[1]) == msg_num):
                     print("removing ack from unack_msgs")
                     # message found, remove from dictionary
-                    #node.unack_msgs.pop(tup)
                     unack_msgs.pop(tup)
                     break
             unack_msgs_lock.release()
@@ -437,11 +413,6 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             
         print("end of message thread loop")
         
-
-
-
-
-
 
 
 if __name__ == "__main__":

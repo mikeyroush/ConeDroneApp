@@ -1,13 +1,21 @@
 '''
+
 This file defines message types and provides a function for parsing messages
 
-Message format 
-    byte 1      = flags, see below
-    bytes 2 - 4 = node number (i.e., in dronecone123, the 123)
-    bytes 5 - 8 = message number (random)
 '''
 
 import os
+
+'''
+
+Message format 
+    byte 1      = flags, see below
+    bytes 2 - 4 = node numbers (i.e., in dronecone123, the 123)
+        bits 9 - 20 = other node number (used by new node and node lost, 0 for other types)
+        bits 21 - 32 = node number (all messages)
+    bytes 5 - 8 = message number (random)
+
+'''
 
 # message types
 RESET = 0x0
@@ -23,7 +31,7 @@ parseMessage
 Parses a message and returns a tuple with the type, node, and number
 
 Returns:
-    tuple(string, string, string) parsed_msg : tuple with type, node, and number
+    tuple(string, string, string, string) parsed_msg : tuple with type, node, number, and other node
 Arguments:
     bytes msg : the received message, in bytes
 '''
@@ -72,6 +80,8 @@ Returns:
 Arguments:
     string msg_type : "reset", "indicate", "new node", "node lost", or "reset all"
     string name : hostname of the node ("dronecone" and a number)
+    string num : message number (only passed in for acks)
+    string name2 : hostname of the other node (only used for new node and node lost)
 '''
 def craftMessage(msg_type, name, num=None, name2=None):
     
