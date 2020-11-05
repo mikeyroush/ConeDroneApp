@@ -76,7 +76,7 @@ def main():
     
     # declare message threads for all current connections 
     for connect in connections:
-        connect.thread = threading.Thread(target=threads.message_thread, args=(connect, connections_lock, reset_lock,unack_msgs_lock,message_queue_lock,))
+        connect.thread = threading.Thread(target=threads.message_thread, args=(connect, connections_lock, reset_lock,unack_msgs_lock,message_queue_lock,name,))
     
     # start listener and flyover threads 
     thread0.start()
@@ -95,12 +95,14 @@ def main():
         # iterate unack messages
         unack_msgs_lock.acquire()
         for tup in unack_msgs.copy():
+            print(tup)
             # if the iteration value is 10, we have lost the node
             if (unack_msgs[tup] == 10):
                 # close the connection
-                connections_lock.acquire()
+                print("node is lost: " + tup[0].name)
+                #connections_lock.acquire()
                 tup[0].connectionClose()
-                connections_lock.release()
+                #connections_lock.release()
                 
                 # remove the current message from unack_msgs
                 unack_msgs.pop(tup)
@@ -112,10 +114,11 @@ def main():
                     
                 # tell the phone that this connection doesn't exist any longer
                 msg_node_lost = messages.craftMessage("node lost", address, name2=tup[0].addr)
-                connections_lock.acquire()
+                #connections_lock.acquire()
+                #for connect in connections.copy():
                 for connect in connections:
                     connect.connectionSend(msg_node_lost)
-                connections_lock.release()
+                #connections_lock.release()
             # if the iteration value is positive and even, resend the message
             if ((unack_msgs[tup] % 2) == 0) and (unack_msgs[tup] != 0):
                 # resend the message

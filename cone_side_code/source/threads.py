@@ -44,13 +44,14 @@ def listener_thread(server_sock, connections_lock, name, unack_msgs_lock):
         # add connection to list
         connections_lock.acquire()
         node.connections.append(connect)
+        connections_lock.release()
         
         # send new node message
         print(name)
         msg_new_node = messages.craftMessage("new node", name, name2=connect.name)
         msg_num = int.from_bytes(msg_new_node[4:], "big")
         
-        for conn in node.connections:
+        for conn in node.connections.copy():
             # do not send message back to whomst've just connected with us
             #if conn == connect:
             #    continue
@@ -59,7 +60,7 @@ def listener_thread(server_sock, connections_lock, name, unack_msgs_lock):
             unack_msgs_lock.acquire()
             node.unack_msgs[(conn, msg_num, msg_new_node)] = 0
             unack_msgs_lock.release()
-        connections_lock.release()
+        #connections_lock.release()
         
         
 
@@ -152,18 +153,19 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             continue
         message_queue_lock.release()
         
+        print("message thread pre processing")
         # handle message
         
         # indicate, new node, and node lost are all for the phone, never for node
         if (msg_type == "indicate" or msg_type == "new node" or msg_type == "node lost"):
             # pass it on
-            connections_lock.acquire()
+            #connections_lock.acquire()
             for conn in node.connections:
                 # do not send message back to whomst've sent it 
                 if conn == connect:
                     continue
                 connectionSend(msg)
-            connections_lock.release()
+            #connections_lock.release()
             
             # send ack
             msg_ack = messages.craftMessage("ack", name, msg_num)
@@ -187,13 +189,13 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                 
             else:
                 # pass it on
-                connections_lock.acquire()
+                #connections_lock.acquire()
                 for conn in node.connections:
                     # do not send message back to whomst've sent it 
                     if conn == connect:
                         continue
                     connectionSend(msg)
-                conncetions_lock.release()
+                #conncetions_lock.release()
                 
             # send ack
             msg_ack = messages.craftMessage("ack", name, msg_num)
@@ -214,13 +216,13 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             reset_lock.release()
             
             #  pass message on 
-            connections_lock.acquire()
+            #connections_lock.acquire()
             for conn in node.connections:
                 # do not send message back to whomst've sent it 
                 if conn == connect:
                     continue
                 connectionSend(msg)
-            conncetions_lock.release()
+            #conncetions_lock.release()
             
             # send ack
             msg_ack = messages.craftMessage("ack", name, msg_num)
@@ -242,6 +244,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             print("error, could not understand msg_type")
             continue
             
+        print("end of message thread loop")
         
 
     
