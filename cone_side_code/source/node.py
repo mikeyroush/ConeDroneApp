@@ -12,6 +12,7 @@ import threading
 import time
 import sys
 import messages
+import sensor
 
 # global VARIABLES
 address = ""            # not modified after definition
@@ -24,6 +25,7 @@ last_reset = ""         # modified
 message_queue = []      # modified 
 MSG_Q_LEN = 50          # constant
 unack_msgs = {}         # modified 
+indicating = False
 
 '''
 main
@@ -233,33 +235,53 @@ Arguments:
 '''
 def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
 
-    '''
+    global connections
+    global unack_msgs
+    global reset
+    global name
+    global indicating
+
     while True:
         reset_lock.acquire()
-        if node.reset:
+        if reset:
+            
+            # TODO: turn off lights, flag
+            # ...
+            
+            indicating = False
             # do reset stuff
-            node.reset = False
+            reset = False
+            reset_lock.release()
+        elif indicating:
             reset_lock.release()
         else:
             reset_lock.release()
+            
             # check for indication
+            indicate, dist = sensor.checkSensor()
+            
             if indicate:
+
+                # TODO: turn on lights, flag
+                # ...
+
+                # set the flag
+                indicating = True
+                
                 # create the indication message
-                msg = messages.craftMessage("indicate", node.name)
-                msg_num = int.from_bytes(msg[4:], "big")
+                msg_indicate = messages.craftMessage("indicate", name)
+                msg_num = int.from_bytes(msg_indicate[4:], "big")
                 
                 # tell the whole world
-                connections_lock.acquire()
                 for connect in node.connections:
                     connect.connectionSend(msg)
                     unack_msgs_lock.acquire()
-                    node.unack_msgs[(connect, msg_num, msg)] = 0
+                    unack_msgs[(connect, msg_num, msg_indicate)] = 0
                     unack_msgs_lock.release()
-                connections.lock_release()
     '''
     while True:
         pass
-
+    '''
 
 '''
 message_thread
