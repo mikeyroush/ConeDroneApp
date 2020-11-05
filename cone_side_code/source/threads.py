@@ -2,6 +2,7 @@ import bluetooth
 import connection
 import node
 import messages
+import threading
 
 '''
 listener_thread
@@ -14,11 +15,13 @@ Arguments:
     socket server_sock : socket we are listening for connections on 
     threading.Lock.Lock connections_lock : lock acquired when accessing the connections list
 '''    
-def listener_thread(server_sock, connections_lock, name, unack_msgs_lock):
+def listener_thread(server_sock, connections_lock, name, unack_msgs_lock, message_queue_lock, reset_lock):
 
     print("listener thread launched")
        
     while True:
+        
+        print("listener thread loop beginning")
         
         # accept new connection 
         recv_sock,address = server_sock.accept()
@@ -41,6 +44,12 @@ def listener_thread(server_sock, connections_lock, name, unack_msgs_lock):
         # instantiate new connection 
         connect = connection.Connection(recv_sock, send_sock, address[0], address[1], new_name)
         
+        # create new message thread
+        connect.thread = threading.Thread(target=message_thread, args=(connect, connections_lock, reset_lock,unack_msgs_lock,message_queue_lock,name,))
+        
+        # start new message thread 
+        connect.thread.start()
+        
         # add connection to list
         connections_lock.acquire()
         node.connections.append(connect)
@@ -56,13 +65,14 @@ def listener_thread(server_sock, connections_lock, name, unack_msgs_lock):
             #if conn == connect:
             #    continue
             conn.connectionSend(msg_new_node)
-            
+            print("here")
             unack_msgs_lock.acquire()
             node.unack_msgs[(conn, msg_num, msg_new_node)] = 0
             unack_msgs_lock.release()
+            print("there")
         #connections_lock.release()
         
-        
+        print("listener thread loop end")
 
 '''
 flyover_thread
@@ -123,7 +133,11 @@ Arguments:
 '''
 def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, message_queue_lock, name):
     
+    #global node.unack_msgs
+    
     while True:
+        
+        print("message thread loop beginning")
         
         # receive incoming messages
         msg = connect.recv_sock.recv(8)
@@ -230,10 +244,18 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             
         # just an ack, we don't need to respond with anything
         elif (msg_type == "ack"):
+            print("handling ack")
+            print(len(node.unack_msgs.copy()))
             # find the message in the unacknowledged messages 
             unack_msgs_lock.acquire()
             for tup in node.unack_msgs.copy():
+                print(tup)
+                print(tup[0].name + " " + connect.name)
+                print(str(tup[1]) + " " + msg_num)
+                print(type(tup[1]))
+                print(type(msg_num))
                 if (tup[0].name == connect.name) and (tup[1] == msg_num):
+                    print("removing ack from unack_msgs")
                     # message found, remove from dictionary
                     node.unack_msgs.pop(tup)
                     break

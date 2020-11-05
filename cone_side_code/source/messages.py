@@ -1,5 +1,3 @@
-import os
-
 '''
 This file defines message types and provides a function for parsing messages
 
@@ -9,6 +7,9 @@ Message format
     bytes 5 - 8 = message number (random)
 '''
 
+import os
+
+# message types
 RESET = 0x0
 INDICATE = 0x1
 NEW_NODE = 0x2

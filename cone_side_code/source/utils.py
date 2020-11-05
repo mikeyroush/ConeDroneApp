@@ -74,6 +74,7 @@ def nodeScan():
 
     for bdaddr in nearby_devices:
         print(bluetooth.lookup_name(bdaddr))
+        type(bluetooth.lookup_name(bdaddr))
         if target_name_pattern.match(bluetooth.lookup_name(bdaddr)):
             target_addresses.append(bdaddr)
 

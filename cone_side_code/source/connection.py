@@ -16,8 +16,8 @@ class Connection:
         self.name = name
     
     def connectionClose(self):
-        send_sock.close()
-        recv_sock.close()
+        self.send_sock.close()
+        self.recv_sock.close()
         
     def connectionSend(self, message):
         print("sending message " + str(message))
