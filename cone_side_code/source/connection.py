@@ -16,17 +16,10 @@ class Connection:
         self.name = name
     
     def connectionClose(self):
-        send_sock.close()
-        recv_sock.close()
+        self.send_sock.close()
+        self.recv_sock.close()
         
     def connectionSend(self, message):
-        self.sock.sendall(message)
-        
-        #TODO: acknowledgement handling, resending on fail
-        '''
-        if ack:
-            if recv_sock is None:
-                print("must provide reply_sock to receive acknowledgement")
-            else:
-                ack = recv_sock.recv(1024)
-        '''
+        print("sending message " + str(message))
+        self.send_sock.sendall(message)
+    

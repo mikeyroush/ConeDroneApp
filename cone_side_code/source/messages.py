@@ -1,14 +1,23 @@
+'''
+
+This file defines message types and provides a function for parsing messages
+
+'''
+
 import os
 
 '''
-This file defines message types and provides a function for parsing messages
 
 Message format 
     byte 1      = flags, see below
-    bytes 2 - 4 = node number (i.e., in dronecone123, the 123)
+    bytes 2 - 4 = node numbers (i.e., in dronecone123, the 123)
+        bits 9 - 20 = other node number (used by new node and node lost, 0 for other types)
+        bits 21 - 32 = node number (all messages)
     bytes 5 - 8 = message number (random)
+
 '''
 
+# message types
 RESET = 0x0
 INDICATE = 0x1
 NEW_NODE = 0x2
@@ -22,7 +31,7 @@ parseMessage
 Parses a message and returns a tuple with the type, node, and number
 
 Returns:
-    tuple(string, string, string) parsed_msg : tuple with type, node, and number
+    tuple(string, string, string, string) parsed_msg : tuple with type, node, number, and other node
 Arguments:
     bytes msg : the received message, in bytes
 '''
@@ -42,16 +51,20 @@ def parseMessage(msg):
     elif (msg_type == ACK):
         parsed_msg0 = "ack"
     
-    msg_node = int.from_bytes(msg[1:4], "big")
+    # get the msg_node that is present for all messages
+    msg_node_full = int.from_bytes(msg[1:4], "big")
+    msg_node = (msg_node_full & 0x000FFF)
     parsed_msg1 = "dronecone" + str(msg_node)
     
-    msg_num_full = int.from_bytes(msg[4:], "big")
-    msg_num = (msg_num_full & 0x000FFF)
+    # get the message number
+    msg_num = int.from_bytes(msg[4:], "big")
     parsed_msg2 = str(msg_num)
     
-    msg_num2 = (msg_num_full & 0xFFF000) >> 12
-    parsed_msg3 = str(msg_num2)
+    # get the msg_node that is present for new node and node lost messages
+    msg_node2 = (msg_node_full & 0xFFF000) >> 12
+    parsed_msg3 = "dronecone" + str(msg_node2)
     
+    # create return tuple
     parsed_msg = (parsed_msg0, parsed_msg1, parsed_msg2, parsed_msg3)
     
     return parsed_msg
@@ -67,6 +80,8 @@ Returns:
 Arguments:
     string msg_type : "reset", "indicate", "new node", "node lost", or "reset all"
     string name : hostname of the node ("dronecone" and a number)
+    string num : message number (only passed in for acks)
+    string name2 : hostname of the other node (only used for new node and node lost)
 '''
 def craftMessage(msg_type, name, num=None, name2=None):
     
