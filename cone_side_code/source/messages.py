@@ -42,16 +42,20 @@ def parseMessage(msg):
     elif (msg_type == ACK):
         parsed_msg0 = "ack"
     
-    msg_node = int.from_bytes(msg[1:4], "big")
+    # get the msg_node that is present for all messages
+    msg_node_full = int.from_bytes(msg[1:4], "big")
+    msg_node = (msg_node_full & 0x000FFF)
     parsed_msg1 = "dronecone" + str(msg_node)
     
-    msg_num_full = int.from_bytes(msg[4:], "big")
-    msg_num = (msg_num_full & 0x000FFF)
+    # get the message number
+    msg_num = int.from_bytes(msg[4:], "big")
     parsed_msg2 = str(msg_num)
     
-    msg_num2 = (msg_num_full & 0xFFF000) >> 12
-    parsed_msg3 = str(msg_num2)
+    # get the msg_node that is present for new node and node lost messages
+    msg_node2 = (msg_node_full & 0xFFF000) >> 12
+    parsed_msg3 = "dronecone" + str(msg_node2)
     
+    # create return tuple
     parsed_msg = (parsed_msg0, parsed_msg1, parsed_msg2, parsed_msg3)
     
     return parsed_msg

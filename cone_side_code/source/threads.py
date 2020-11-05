@@ -14,7 +14,7 @@ Arguments:
     socket server_sock : socket we are listening for connections on 
     threading.Lock.Lock connections_lock : lock acquired when accessing the connections list
 '''    
-def listener_thread(server_sock, connections_lock):
+def listener_thread(server_sock, connections_lock, name, unack_msgs_lock):
 
     print("listener thread launched")
        
@@ -46,14 +46,14 @@ def listener_thread(server_sock, connections_lock):
         node.connections.append(connect)
         
         # send new node message
-        print(node.name)
-        msg_new_node = messages.craftMessage("new node", node.name, name2=connect.name)
+        print(name)
+        msg_new_node = messages.craftMessage("new node", name, name2=connect.name)
         msg_num = int.from_bytes(msg_new_node[4:], "big")
         
         for conn in node.connections:
             # do not send message back to whomst've just connected with us
-            if conn == connect:
-                continue
+            #if conn == connect:
+            #    continue
             conn.connectionSend(msg_new_node)
             
             unack_msgs_lock.acquire()
@@ -120,25 +120,27 @@ Arguments:
     socket recv_sock : the client socket for the specific connection we are receiving from
 
 '''
-def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock):
+def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, message_queue_lock, name):
     
     while True:
         
         # receive incoming messages
         msg = connect.recv_sock.recv(8)
         
+        print("received [%s]" % msg)
+        
         # parse message
         msg_type, msg_node, msg_num, _ = messages.parseMessage(msg)
-        print(msg_type + " received from dronecone" + msg_node)
+        print(msg_type + " received from " + msg_node)
         
         # check if we have handled this before
-        node.message_queue_lock.acquire()
+        message_queue_lock.acquire()
         msg_processed = False
         for saved_msg in node.message_queue:
             # if msg_num in the queue, we have received this message before
             if saved_msg[0] == msg_num:
                 # send acknowledgement
-                msg_ack = messages.craftMessage("ack", node.address, msg_num)
+                msg_ack = messages.craftMessage("ack", name, msg_num)
                 connect.connectionSend(msg_ack)  
                 # we have now processed the message
                 msg_processed = True
@@ -146,9 +148,9 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock):
             
         # if we dealt with the message, skip the rest of this
         if msg_processed:
-            node.message_queue_lock.release()
+            message_queue_lock.release()
             continue
-        node.msg_queue_lock.release()
+        message_queue_lock.release()
         
         # handle message
         
@@ -161,15 +163,15 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock):
                 if conn == connect:
                     continue
                 connectionSend(msg)
-            conncetions_lock.release()
+            connections_lock.release()
             
             # send ack
-            msg_ack = messages.craftMessage("ack", node.address, msg_num)
+            msg_ack = messages.craftMessage("ack", name, msg_num)
             connect.connectionSend(msg_ack)
             
         # could be for us, we should check
         elif (msg_type == "reset"):
-            if (node.name == msg_node):
+            if (name == msg_node):
                 # it's for you
                 reset_lock.acquire()
                 if not node.reset:
@@ -194,7 +196,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock):
                 conncetions_lock.release()
                 
             # send ack
-            msg_ack = messages.craftMessage("ack", node.address, msg_num)
+            msg_ack = messages.craftMessage("ack", name, msg_num)
             connect.connectionSend(msg_ack)
             
         # is for us and everyone else
@@ -221,7 +223,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock):
             conncetions_lock.release()
             
             # send ack
-            msg_ack = messages.craftMessage("ack", node.address, msg_num)
+            msg_ack = messages.craftMessage("ack", name, msg_num)
             connect.connectionSend(msg_ack)
             
         # just an ack, we don't need to respond with anything
@@ -229,7 +231,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock):
             # find the message in the unacknowledged messages 
             unack_msgs_lock.acquire()
             for tup in node.unack_msgs.copy():
-                if (tup[0].addr == connect.addr) and (tup[1] == msg_num):
+                if (tup[0].name == connect.name) and (tup[1] == msg_num):
                     # message found, remove from dictionary
                     node.unack_msgs.pop(tup)
                     break

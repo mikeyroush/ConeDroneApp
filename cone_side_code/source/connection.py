@@ -20,7 +20,8 @@ class Connection:
         recv_sock.close()
         
     def connectionSend(self, message):
-        self.sock.sendall(message)
+        print("sending message " + str(message))
+        self.send_sock.sendall(message)
         
         #TODO: acknowledgement handling, resending on fail
         '''

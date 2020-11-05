@@ -71,12 +71,12 @@ def main():
     unack_msgs_lock = threading.Lock()
 
     # declare listener and flyover thread 
-    thread0 = threading.Thread(target=threads.listener_thread, args=(server_sock,connections_lock,))
+    thread0 = threading.Thread(target=threads.listener_thread, args=(server_sock,connections_lock,name,unack_msgs_lock,))
     thread1 = threading.Thread(target=threads.flyover_thread, args=(connections_lock, reset_lock,unack_msgs_lock,))
     
     # declare message threads for all current connections 
     for connect in connections:
-        connect.thread = threading.Thread(target=threads.message_thread, args=(connect, connections_lock, reset_lock,unack_msgs_lock,))
+        connect.thread = threading.Thread(target=threads.message_thread, args=(connect, connections_lock, reset_lock,unack_msgs_lock,message_queue_lock,))
     
     # start listener and flyover threads 
     thread0.start()
