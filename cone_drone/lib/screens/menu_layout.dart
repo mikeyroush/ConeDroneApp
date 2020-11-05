@@ -1,7 +1,8 @@
-import 'package:cone_drone/screens/pilots/pilot_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cone_drone/screens/settings_form.dart';
 import 'package:cone_drone/screens/cone/cone_screen.dart';
+import 'package:cone_drone/screens/pilots/pilot_screen.dart';
+import 'package:cone_drone/screens/flight/flight_screen.dart';
 import 'package:cone_drone/services/auth.dart';
 import 'package:cone_drone/constants.dart';
 
@@ -142,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen>
             child: Padding(
               padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 8.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
@@ -159,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen>
                           });
                         },
                       ),
-                      Text('Dashboard', style: kTextFieldStyle),
+                      Text('Cone Drone', style: kTextFieldStyle),
                       SizedBox(),
                     ],
                   ),
@@ -168,13 +169,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ? ConeScreen()
                       : (_state == kScreenState.pilot)
                           ? PilotScreen()
-                          : Expanded(
-                              child: Text(
-                                'not implemented',
-                                style: kTitleTextStyle.copyWith(
-                                    color: Colors.white70),
-                              ),
-                            ),
+                          : FlightScreen()
                 ],
               ),
             ),

@@ -11,6 +11,21 @@ import bluetooth
 import re
 
 '''
+enableBluetooth
+
+Bring up hci0
+
+Returns:
+    int code : error code returned by command
+Arguments:
+    None
+'''
+def enableBluetooth():
+    code = os.system("hciconfig hci0 up piscan 2>/dev/null")
+    return code
+
+
+'''
 getBDaddr 
 
 Get the Raspberry Pi's BD address
@@ -37,6 +52,7 @@ Arguments:
 '''
 def getName():
     name = os.popen("hostname").read().rstrip()
+    return name 
     
 
 '''
@@ -51,12 +67,13 @@ Arguments:
 '''
 def nodeScan():
     target_addresses = []
-    target_name_pattern = re.compile("^chris*")
-    #target_name_pattern = re.compile("^dronecone*")
+    #target_name_pattern = re.compile("^chris*")
+    target_name_pattern = re.compile("^dronecone*")
 
     nearby_devices = bluetooth.discover_devices()
 
     for bdaddr in nearby_devices:
+        print(bluetooth.lookup_name(bdaddr))
         if target_name_pattern.match(bluetooth.lookup_name(bdaddr)):
             target_addresses.append(bdaddr)
 
@@ -98,7 +115,7 @@ Returns:
 Arguments:
 
 '''
-def establishConnection(address, server_sock):
+def establishConnection(address, server_sock, name):
     
     # set up the socket we will use to connect 
     send_sock = bluetooth.BluetoothSocket(bluetooth.L2CAP)
@@ -110,7 +127,7 @@ def establishConnection(address, server_sock):
     send_sock.connect((address, port))
     
     # introduce yourself
-    send_sock.send("hello")
+    send_sock.sendall(int(name[9:]).to_bytes(8, "big"))
     
     # accept reverse connection
     recv_sock,address = server_sock.accept()

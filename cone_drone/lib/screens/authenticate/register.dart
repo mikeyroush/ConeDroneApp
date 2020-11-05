@@ -16,6 +16,7 @@ class Register extends StatefulWidget {
 class _RegisterState extends State<Register> {
   final AuthService _auth = AuthService();
   final _formKey = GlobalKey<FormState>();
+  Orientation screenOrientation;
   bool _loading = false;
   String email = '';
   String pass = '';
@@ -23,6 +24,8 @@ class _RegisterState extends State<Register> {
 
   @override
   Widget build(BuildContext context) {
+    screenOrientation = MediaQuery.of(context).orientation;
+
     return _loading
         ? LoadingScreen()
         : Scaffold(
@@ -46,7 +49,9 @@ class _RegisterState extends State<Register> {
                         ),
                       ),
                       SizedBox(
-                        height: 48.0,
+                        height: screenOrientation == Orientation.portrait
+                            ? 48.0
+                            : 8.0,
                       ),
                       TextFormField(
                         validator: (value) =>
