@@ -240,6 +240,9 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
     global reset
     global name
     global indicating
+    
+    distance_arr = [False, 0]
+    schedule.every(.008).seconds.do(sensor.checkSensor, distance_arr = blar)
 
     while True:
         reset_lock.acquire()
@@ -253,11 +256,13 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
             reset = False
             reset_lock.release()
         elif indicating:
-            reset_lock.release()
+            reset_lock.release()    
         else:
             reset_lock.release()
             
             # check for indication
+            #check if the sensor needs to be checked, if yes record values and continue
+            schedule.run_pending()
             indicate, dist = sensor.checkSensor()
             
             if indicate:
