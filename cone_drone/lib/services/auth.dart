@@ -93,4 +93,12 @@ class AuthService {
       return null;
     }
   }
+
+  static String validateEmail(String value) {
+    return value.isEmpty ? 'Enter an Email' : null;
+  }
+
+  static String validatePassword(String value) {
+    return value.length < 6 ? 'Enter a password of 6+ characters' : null;
+  }
 }

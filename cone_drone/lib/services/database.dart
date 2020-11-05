@@ -8,6 +8,8 @@ class DatabaseService {
   final String flightID;
   DatabaseService({this.instructorID, this.pilotID, this.flightID});
 
+  // ********** PILOTS **********
+
   // collection reference
   final CollectionReference pilotCollection =
       FirebaseFirestore.instance.collection('pilots');
@@ -60,8 +62,6 @@ class DatabaseService {
         .map(_pilotListFromSnapshot);
   }
 
-  //
+  // ********** FLIGHTS **********
 
-  // user data from snapshot
-  // get user doc stream
 }

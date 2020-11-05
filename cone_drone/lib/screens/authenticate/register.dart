@@ -54,8 +54,7 @@ class _RegisterState extends State<Register> {
                             : 8.0,
                       ),
                       TextFormField(
-                        validator: (value) =>
-                            value.isEmpty ? 'Enter an Email' : null,
+                        validator: AuthService.validateEmail,
                         style: kTextFieldStyle,
                         decoration:
                             kTextFieldDecoration.copyWith(hintText: 'Email'),
@@ -68,9 +67,7 @@ class _RegisterState extends State<Register> {
                       SizedBox(height: 8.0),
                       TextFormField(
                         obscureText: true,
-                        validator: (value) => value.length < 6
-                            ? 'Enter a password of 6+ characters'
-                            : null,
+                        validator: AuthService.validatePassword,
                         style: kTextFieldStyle,
                         decoration:
                             kTextFieldDecoration.copyWith(hintText: 'Password'),
