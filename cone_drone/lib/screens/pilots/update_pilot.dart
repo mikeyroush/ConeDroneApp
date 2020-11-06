@@ -1,7 +1,6 @@
 import 'package:cone_drone/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:cone_drone/components/rounded_botton.dart';
 import 'package:cone_drone/models/pilot.dart';
 import 'package:cone_drone/services/database.dart';
@@ -18,8 +17,7 @@ class UpdatePilotForm extends StatefulWidget {
 
 class _UpdatePilotFormState extends State<UpdatePilotForm> {
   final _formKey = GlobalKey<FormState>();
-  final phoneFormatter = MaskTextInputFormatter(
-      mask: '+# (###) ###-####', filter: {"#": RegExp(r'[0-9]')});
+  final phoneFormatter = FormValidator().phoneFormatter;
 
   // form values
   String _currentName;

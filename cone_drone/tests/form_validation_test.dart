@@ -54,4 +54,14 @@ void main() {
     var result = FormValidator.validatePhone('+1 (979) 458-7447');
     expect(result, null);
   });
+
+  test('Null dropdown item returns error string', () {
+    var result = FormValidator.validateDropdown(null);
+    expect(result, FormValidator.dropdownMessage);
+  });
+
+  test('Valid dropdown item returns null', () {
+    var result = FormValidator.validateDropdown('pilot');
+    expect(result, null);
+  });
 }

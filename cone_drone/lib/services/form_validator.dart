@@ -1,3 +1,5 @@
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+
 class FormValidator {
   static final String nameMessage = 'Please enter a name.';
   static final String emailMessage = 'Please enter an email.';
@@ -9,6 +11,11 @@ class FormValidator {
   static final String phoneMessage = 'Please enter a phone number.';
   static final String phonePattern = r'^(?:[+0]1)?[0-9()\s-]{10,15}$';
   static final RegExp phoneReg = new RegExp(phonePattern);
+  final phoneFormatter = MaskTextInputFormatter(
+    mask: '(###) ###-####',
+    filter: {"#": RegExp(r'[0-9]')},
+  );
+  static final String dropdownMessage = 'Please select a pilot.';
 
   static String validateName(String value) {
     return value.isEmpty ? nameMessage : null;
@@ -24,5 +31,9 @@ class FormValidator {
 
   static String validatePhone(String value) {
     return !phoneReg.hasMatch(value) ? phoneMessage : null;
+  }
+
+  static String validateDropdown(String value) {
+    return value == null ? dropdownMessage : null;
   }
 }

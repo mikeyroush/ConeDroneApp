@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:cone_drone/components/rounded_botton.dart';
 import 'package:cone_drone/models/user.dart';
 import 'package:cone_drone/models/pilot.dart';
@@ -16,8 +15,7 @@ class AddPilotForm extends StatefulWidget {
 
 class _AddPilotFormState extends State<AddPilotForm> {
   final _formKey = GlobalKey<FormState>();
-  final phoneFormatter = MaskTextInputFormatter(
-      mask: '+# (###) ###-####', filter: {"#": RegExp(r'[0-9]')});
+  final phoneFormatter = FormValidator().phoneFormatter;
 
   // form values
   String _currentName;
@@ -71,9 +69,7 @@ class _AddPilotFormState extends State<AddPilotForm> {
             title: 'Add',
             backgroundColor: Colors.blueAccent,
             onPress: () async {
-              print('pressed: $_currentPhone');
               if (_formKey.currentState.validate()) {
-                print('made it: $_currentPhone');
                 await DatabaseService(instructorID: user.uid)
                     .addPilot(_currentName, _currentEmail, _currentPhone);
                 Navigator.pop(context);
