@@ -3,6 +3,7 @@ import 'package:cone_drone/components/rounded_botton.dart';
 import 'package:cone_drone/screens/loading_screen.dart';
 import 'package:cone_drone/models/user.dart';
 import 'package:cone_drone/services/auth.dart';
+import 'package:cone_drone/services/form_validator.dart';
 import 'package:cone_drone/constants.dart';
 
 class Login extends StatefulWidget {
@@ -53,7 +54,8 @@ class _LoginState extends State<Login> {
                             : 8.0,
                       ),
                       TextFormField(
-                        validator: AuthService.validateEmail,
+                        validator: FormValidator.validateEmail,
+                        keyboardType: TextInputType.emailAddress,
                         style: kTextFieldStyle,
                         decoration:
                             kTextFieldDecoration.copyWith(hintText: 'Email'),
@@ -66,7 +68,7 @@ class _LoginState extends State<Login> {
                       SizedBox(height: 8.0),
                       TextFormField(
                         obscureText: true,
-                        validator: AuthService.validatePassword,
+                        validator: FormValidator.validatePassword,
                         style: kTextFieldStyle,
                         decoration:
                             kTextFieldDecoration.copyWith(hintText: 'Password'),

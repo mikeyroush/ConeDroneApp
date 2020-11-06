@@ -1,9 +1,11 @@
 import 'package:cone_drone/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:cone_drone/components/rounded_botton.dart';
 import 'package:cone_drone/models/pilot.dart';
 import 'package:cone_drone/services/database.dart';
+import 'package:cone_drone/services/form_validator.dart';
 import 'package:cone_drone/constants.dart';
 
 class UpdatePilotForm extends StatefulWidget {
@@ -16,6 +18,8 @@ class UpdatePilotForm extends StatefulWidget {
 
 class _UpdatePilotFormState extends State<UpdatePilotForm> {
   final _formKey = GlobalKey<FormState>();
+  final phoneFormatter = MaskTextInputFormatter(
+      mask: '+# (###) ###-####', filter: {"#": RegExp(r'[0-9]')});
 
   // form values
   String _currentName;
@@ -39,7 +43,8 @@ class _UpdatePilotFormState extends State<UpdatePilotForm> {
               hintText: 'Name',
               hintStyle: TextStyle(color: Colors.black54),
             ),
-            validator: (val) => val.isEmpty ? 'Please enter a name.' : null,
+            validator: FormValidator.validateName,
+            keyboardType: TextInputType.text,
             onChanged: (val) => setState(() => _currentName = val),
           ),
           SizedBox(height: 20.0),
@@ -49,7 +54,8 @@ class _UpdatePilotFormState extends State<UpdatePilotForm> {
               hintText: 'Email',
               hintStyle: TextStyle(color: Colors.black54),
             ),
-            validator: (val) => val.isEmpty ? 'Please enter an email.' : null,
+            validator: FormValidator.validateEmail,
+            keyboardType: TextInputType.emailAddress,
             onChanged: (val) => setState(() => _currentEmail = val),
           ),
           SizedBox(height: 20.0),
@@ -59,8 +65,9 @@ class _UpdatePilotFormState extends State<UpdatePilotForm> {
               hintText: 'Phone Number',
               hintStyle: TextStyle(color: Colors.black54),
             ),
-            validator: (val) =>
-                val.isEmpty ? 'Please enter a phone number.' : null,
+            validator: FormValidator.validatePhone,
+            keyboardType: TextInputType.phone,
+            inputFormatters: [phoneFormatter],
             onChanged: (val) => setState(() => _currentPhone = val),
           ),
           Row(
