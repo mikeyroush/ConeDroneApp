@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:cone_drone/components/rounded_botton.dart';
+import 'package:cone_drone/services/form_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -24,6 +25,8 @@ class _FlightScreenState extends State<FlightScreen> {
 
   // form values
   String _currentPilotID;
+  int _conesTotal;
+  int _conesActivated;
 
   void updatePilot(String uid) {
     setState(() => _currentPilotID = uid);
@@ -154,6 +157,9 @@ class _FlightScreenState extends State<FlightScreen> {
                                 FilteringTextInputFormatter.digitsOnly,
                                 FilteringTextInputFormatter.singleLineFormatter
                               ],
+                              onChanged: (val) =>
+                                  setState(() => _conesTotal = int.parse(val)),
+                              validator: FormValidator.validateInteger,
                             ),
                             SizedBox(height: 8.0),
                             TextFormField(
@@ -165,13 +171,18 @@ class _FlightScreenState extends State<FlightScreen> {
                                 FilteringTextInputFormatter.digitsOnly,
                                 FilteringTextInputFormatter.singleLineFormatter
                               ],
+                              onChanged: (val) => setState(
+                                  () => _conesActivated = int.parse(val)),
+                              validator: FormValidator.validateInteger,
                             ),
                             RoundedButton(
                               title: 'Submit',
                               backgroundColor: Colors.blueAccent,
                               onPress: () async {
-                                if (_formKey.currentState.validate() &&) {
+                                if (_formKey.currentState.validate() &&
+                                    !_stopwatch.isRunning) {
                                   // send data and reset form
+                                  print('send data');
                                 }
                               },
                             )

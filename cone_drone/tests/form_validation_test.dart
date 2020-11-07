@@ -64,4 +64,19 @@ void main() {
     var result = FormValidator.validateDropdown('pilot');
     expect(result, null);
   });
+
+  test('Non-numeric string returns error string', () {
+    var result = FormValidator.validateInteger('value');
+    expect(result, FormValidator.integerMessage);
+  });
+
+  test('Double string returns error string', () {
+    var result = FormValidator.validateInteger('0.1');
+    expect(result, FormValidator.integerMessage);
+  });
+
+  test('Numeric string returns null', () {
+    var result = FormValidator.validateInteger('10');
+    expect(result, null);
+  });
 }
