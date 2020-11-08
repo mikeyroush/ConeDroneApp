@@ -7,8 +7,8 @@ import time
 import RPi.GPIO as GPIO
 import schedule
 
-SDA_PIN = 1 #... what are these her for?
-SCL_PIN = 2
+SDA_PIN = 3 #I don't think these are strictly necessary but I'm leaving them anyway
+SCL_PIN = 5
 PIN6_PIN = 37 #pin 6 on the sensor, which is used to check when data is ready. AKA: when a reading is taken!
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(PIN6_PIN, GPIO.IN) 
@@ -40,7 +40,7 @@ GPIO.setup(PIN6_PIN, GPIO.IN) #gotta read from
 def checkSensor(distance_arr):
     #If the sensor is still updating its registers, wait a sec
     dist = distance_arr[0]
-    if not GPIO.input(37):
+    if not GPIO.input(PIN6_PIN):
         time.sleep(.001)
     
     #TFLuna stores data in 2 registers, one byte each. First is the low half of the result, second is the high half.
