@@ -1,14 +1,14 @@
-# import board
+import board
 from time import sleep
-# import neopixel
+import neopixel
 import sys
 import signal
 
 numPixels = 10
-# pixels = neopixel.NeoPixel(board.D18, numPixels)
+pixels = neopixel.NeoPixel(board.D18, numPixels)
 
 def clearLEDS():
-    # pixels.fill((0, 0, 0))
+    pixels.fill((0, 0, 0))
     pass
 
 '''
@@ -21,8 +21,8 @@ def indicator_led(indicate):
 
         while(True):
             clearLEDS()
-            # pixels[pixel1] = (0, 0, 128)
-            # pixels[pixel2] = (0, 0, 128)
+            pixels[pixel1] = (0, 0, 128)
+            pixels[pixel2] = (0, 0, 128)
             pixel1 += 1
             pixel2 += 1
 
