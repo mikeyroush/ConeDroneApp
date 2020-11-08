@@ -1,5 +1,5 @@
 import board
-from time import sleep
+import time
 import neopixel
 import sys
 import signal
@@ -7,7 +7,7 @@ import RPi.GPIO as GPIO
 
 
 numPixels = 10
-pixels = neopixel.NeoPixel(board.D18, numPixels)
+pixels = neopixel.NeoPixel(board.D21, numPixels) #Connected to GPIO 21
 SERVO_PWM = 12 #I don't know what these should be 
 
 #set up for pin 12 PWM. 
@@ -21,24 +21,30 @@ def clearLEDS():
 '''
 Displays a revolving pair of lights that circle around the LED strip
 '''
-def indicator_led(indicate):
+def indicator_led(indicate, startup):
+    pixel1 = 0
+    pixel2 = 1
+    i = 0
+    desiredRotations = 5
     if (indicate):
-        pixel1 = 0
-        pixel2 = 1
-
-        while(True):
+        while(i < (numPixels * desiredRotations - 1) ):
             clearLEDS()
-            pixels[pixel1] = (0, 0, 128)
-            pixels[pixel2] = (0, 0, 128)
+            if (startup):
+                pixels[pixel1] = (0, 0, 128)
+                pixels[pixel2] = (0, 0, 128)
+            else:
+                pixels[pixel1] = (0, 128, 0)
+                pixels[pixel2] = (0, 128, 0)
             pixel1 += 1
             pixel2 += 1
+            i +=1
 
             if(pixel1 > (numPixels-1)):
                 pixel1 = 0
             if(pixel2 > (numPixels-1)):
                 pixel2 = 0
 
-            sleep(0.1)
+            time.sleep(0.1)
 
     else:
         clearLEDS()
