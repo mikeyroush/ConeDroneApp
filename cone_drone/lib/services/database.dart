@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cone_drone/models/user.dart';
 import 'package:cone_drone/models/pilot.dart';
+import 'package:cone_drone/models/flight.dart';
 
 class DatabaseService {
   final String instructorID;
@@ -8,7 +9,9 @@ class DatabaseService {
   final String flightID;
   DatabaseService({this.instructorID, this.pilotID, this.flightID});
 
+  // ****************************
   // ********** PILOTS **********
+  // ****************************
 
   // collection reference
   final CollectionReference pilotCollection =
@@ -62,6 +65,47 @@ class DatabaseService {
         .map(_pilotListFromSnapshot);
   }
 
+  // *****************************
   // ********** FLIGHTS **********
+  // *****************************
 
+  // collection reference
+  final CollectionReference flightCollection =
+      FirebaseFirestore.instance.collection('flights');
+
+  // create new flight record
+  Future addFlight(String pilotID, int totalCones, int activatedCones,
+      int timeElapsedMilli) async {
+    return await flightCollection.add({
+      'pilotID': pilotID,
+      'totalCones': totalCones,
+      'activatedCones': activatedCones,
+      'timeElapsedMilli': timeElapsedMilli,
+      'timeStamp': DateTime.now(),
+    });
+  }
+
+  // flight list from snapshot
+  List<Flight> _flightListFromSnapshot(QuerySnapshot snapshot) {
+    return snapshot.docs.map((doc) {
+      return Flight(
+        uid: doc.id ?? '',
+        totalCones: doc.data()['totalCones'] ?? 0,
+        activatedCones: doc.data()['activatedCones'] ?? 0,
+        timeElapsedMilli: doc.data()['timeElapsedMilli'] ?? 0,
+        timeStamp:
+            (doc.data()['timeStamp'] as Timestamp).toDate() ?? DateTime.now(),
+        pilotID: doc.data()['pilotID'] ?? '',
+      );
+    }).toList();
+  }
+
+  // get flights stream
+  Stream<List<Flight>> get flights {
+    return flightCollection
+        .where('pilotID', isEqualTo: pilotID)
+        .orderBy('timeStamp')
+        .snapshots()
+        .map(_flightListFromSnapshot);
+  }
 }

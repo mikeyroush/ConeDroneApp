@@ -181,8 +181,18 @@ class _FlightScreenState extends State<FlightScreen> {
                               onPress: () async {
                                 if (_formKey.currentState.validate() &&
                                     !_stopwatch.isRunning) {
-                                  // send data and reset form
-                                  print('send data');
+                                  // send data
+                                  await DatabaseService().addFlight(
+                                      _currentPilotID,
+                                      _conesTotal,
+                                      _conesActivated,
+                                      _stopwatch.elapsedMilliseconds);
+                                  // reset form and stopwatch
+                                  _formKey.currentState.reset();
+                                  setState(() {
+                                    _stopwatch.reset();
+                                    timeElapsed = "00:00.0";
+                                  });
                                 }
                               },
                             )

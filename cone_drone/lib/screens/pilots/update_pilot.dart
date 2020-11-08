@@ -1,10 +1,12 @@
-import 'package:cone_drone/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cone_drone/components/rounded_botton.dart';
 import 'package:cone_drone/models/pilot.dart';
+import 'package:cone_drone/models/flight.dart';
+import 'package:cone_drone/models/user.dart';
 import 'package:cone_drone/services/database.dart';
 import 'package:cone_drone/services/form_validator.dart';
+import 'package:cone_drone/screens/pilots/flight_list.dart';
 import 'package:cone_drone/constants.dart';
 
 class UpdatePilotForm extends StatefulWidget {
@@ -101,6 +103,18 @@ class _UpdatePilotFormState extends State<UpdatePilotForm> {
                 ),
               ),
             ],
+          ),
+          InkWell(
+            child: Text('View Records'),
+            onTap: () => Navigator.push(context, MaterialPageRoute(
+              builder: (context) {
+                return StreamProvider<List<Flight>>.value(
+                  value: DatabaseService(pilotID: widget.pilot.uid).flights,
+                  catchError: (_, __) => null,
+                  child: FlightList(),
+                );
+              },
+            )),
           ),
         ],
       ),

@@ -81,7 +81,7 @@ class AuthService {
   // send verification email
   void sendVerificationEmail() {
     _auth.currentUser.sendEmailVerification();
-    signOut();
+    // signOut();
   }
 
   // sign out

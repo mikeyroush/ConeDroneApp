@@ -43,7 +43,9 @@ class PilotScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Expanded(child: PilotList()),
+            Expanded(
+              child: PilotList(),
+            ),
             FloatingActionButton(
               child: Text('+'),
               onPressed: () => _showAddPilotPanel(),
