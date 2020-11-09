@@ -95,6 +95,11 @@ class DatabaseService {
     });
   }
 
+  // delete flight record
+  Future deleteFlight() async {
+    return await flightCollection.doc(flightID).delete();
+  }
+
   // flight list from snapshot
   List<Flight> _flightListFromSnapshot(QuerySnapshot snapshot) {
     return snapshot.docs.map((doc) {
