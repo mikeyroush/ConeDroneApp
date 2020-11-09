@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:cone_drone/models/flight.dart';
+import 'package:cone_drone/constants.dart';
 
 class FlightTile extends StatelessWidget {
   final Flight flight;
@@ -19,8 +21,10 @@ class FlightTile extends StatelessWidget {
               Text('${flight.totalCones}'),
             ],
           ),
-          title: Text('Time: ${flight.timeElapsedMilli / 1000} seconds'),
-          subtitle: Text('${flight.timeStamp}'),
+          // Todo: update elapsed time label
+          title: Text('Time: ${kFormatMilli(flight.timeElapsedMilli)}'),
+          subtitle: Text(
+              '${DateFormat.yMMMd().format(flight.timeStamp)} at ${DateFormat.Hm().format(flight.timeStamp)}'),
         ),
       ),
     );

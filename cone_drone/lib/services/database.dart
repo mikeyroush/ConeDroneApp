@@ -40,6 +40,16 @@ class DatabaseService {
 
   // delete pilot
   Future deletePilot() async {
+    // delete flight records for pilot
+    Stream<QuerySnapshot> flightRecords =
+        flightCollection.where('pilotID', isEqualTo: pilotID).snapshots();
+    flightRecords.forEach((record) {
+      record.docs.forEach((doc) async {
+        await flightCollection.doc(doc.id).delete();
+      });
+    });
+
+    // delete pilot
     return await pilotCollection.doc(pilotID).delete();
   }
 

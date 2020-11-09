@@ -42,15 +42,6 @@ class AuthService {
       UserCredential credential = await _auth.createUserWithEmailAndPassword(
           email: email, password: password);
       _auth.currentUser.sendEmailVerification();
-
-      //Todo
-      // create a new doc for the user
-      // await DatabaseService(uid: credential.user.uid)
-      //     .updateUserData('0', 'new member', 100);
-
-      // sign out
-      // signOut();
-
       return _userFromFirebaseUser(credential.user);
     } on FirebaseAuthException catch (e) {
       print(e.message.toString());

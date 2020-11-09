@@ -36,17 +36,8 @@ class _FlightScreenState extends State<FlightScreen> {
     Timer(refreshRate, () {
       if (_stopwatch.isRunning) {
         updateStopwatch();
-        setState(() {
-          timeElapsed = (_stopwatch.elapsed.inMinutes % 60)
-                  .toString()
-                  .padLeft(2, '0') +
-              ":" +
-              (_stopwatch.elapsed.inSeconds % 60).toString().padLeft(2, '0') +
-              "." +
-              ((_stopwatch.elapsed.inMilliseconds % 1000) / 100)
-                  .floor()
-                  .toString();
-        });
+        setState(
+            () => timeElapsed = kFormatMilli(_stopwatch.elapsedMilliseconds));
       }
     });
   }

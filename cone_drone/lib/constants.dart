@@ -3,6 +3,14 @@ import 'package:flutter/material.dart';
 enum kScreenState { logIn, register, cone, pilot, record }
 enum kState { initialized, loading, error }
 
+String kFormatMilli(int milli) {
+  return (milli / (60 * 1000) % 60).floor().toString().padLeft(2, '0') +
+      ":" +
+      (milli / 1000 % 60).floor().toString().padLeft(2, '0') +
+      "." +
+      ((milli % 1000) / 100).floor().toString();
+}
+
 const kTimerTextStyle = TextStyle(
   fontWeight: FontWeight.w900,
   fontSize: 50.0,
