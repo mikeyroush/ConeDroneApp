@@ -13,6 +13,7 @@ import time
 import sys
 import messages
 import sensor
+import indicator
 
 # global VARIABLES
 address = ""            # not modified after definition
@@ -25,7 +26,7 @@ last_reset = ""         # modified
 message_queue = []      # modified 
 MSG_Q_LEN = 50          # constant
 unack_msgs = {}         # modified 
-indicating = False
+indicating = False      # modified
 
 '''
 main
@@ -42,6 +43,9 @@ def main():
     global message_queue
     global unack_msgs
     global connections
+    
+    # begin start-up indicating
+    indicator.indicate(True, True)
     
     # make sure hci0 is up
     code = utils.enableBluetooth()
@@ -98,7 +102,10 @@ def main():
     # start message threads for all connections 
     for connect in connections:
         connect.thread.start()
-
+    
+    # stop start-up indicating
+    indicator.indicate(False)
+    
     # main thread becomes the thread that maintains the unack_msgs dictionary
     while True:
     
@@ -246,17 +253,23 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
 
     while True:
         reset_lock.acquire()
+        
+        # if we were told to reset
         if reset:
             
             # TODO: turn off lights, flag
-            # ...
+            indicator.indicate(False)
             
             indicating = False
             # do reset stuff
             reset = False
             reset_lock.release()
+            
+        # if already indicating, don't worry about checking
         elif indicating:
             reset_lock.release()    
+            
+        # check for indication
         else:
             reset_lock.release()
             
@@ -268,7 +281,7 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
             if indicate:
 
                 # TODO: turn on lights, flag
-                # ...
+                indicator.indicate(True)
 
                 # set the flag
                 indicating = True
