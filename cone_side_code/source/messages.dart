@@ -3,6 +3,31 @@
 
 import 'dart:typed_data';
 
+/*
+
+Message format 
+    byte 1      = flags, see below
+    bytes 2 - 4 = node numbers (i.e., in dronecone123, the 123)
+        bits 9 - 20 = other node number (used by new node and node lost, 0 for other types)
+        bits 21 - 32 = node number (all messages)
+    bytes 5 - 8 = message number (random)
+
+*/
+
+/*
+
+message types
+
+RESET = 0x0
+INDICATING = 0x1
+NEW_NODE = 0x2
+NODE_LOST = 0x3
+RESET_ALL = 0x4
+ACK = 0x5
+DO_INDICATE = 0x6
+
+*/
+
 List parseMessage(msg) {
 
     var bytes = msg.buffer.asByteData();
@@ -20,7 +45,7 @@ List parseMessage(msg) {
 		}
 		case 1: {
 			// indicate
-			msg_type = "indicate";
+			msg_type = "indicating";
       break;
 		}
 		case 2: {
@@ -43,6 +68,10 @@ List parseMessage(msg) {
 			msg_type = "ack";
       break;
 		}
+		case 6: {
+			// do indicate
+			msg_type = "do indicate"
+	  break;
   }
 			
 	var msg_node = "dronecone" + (first_num & 0x00000FFF).toString();
@@ -70,7 +99,7 @@ Uint8List craftMessage(type, name, {num : -1, name2: "dronecone???"}) {
 		case "reset": {
 			break;
 		}
-		case "indicate": {
+		case "indicating": {
 			msg_int = msg_int | 0x0100000000000000;
 			break;
 		}
@@ -89,6 +118,10 @@ Uint8List craftMessage(type, name, {num : -1, name2: "dronecone???"}) {
 		case "ack": {
 			msg_int = msg_int | 0x0500000000000000;
 			break;		
+		}
+		case "do indicate": {
+			msg_int = msg_int | 0x0600000000000000;
+			break;
 		}
 	}
 	

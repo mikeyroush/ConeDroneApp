@@ -19,11 +19,12 @@ Message format
 
 # message types
 RESET = 0x0
-INDICATE = 0x1
+INDICATING = 0x1
 NEW_NODE = 0x2
 NODE_LOST = 0x3
 RESET_ALL = 0x4
 ACK = 0x5
+DO_INDICATE = 0x6
 
 '''
 parseMessage
@@ -40,8 +41,8 @@ def parseMessage(msg):
     msg_type = msg[0]
     if (msg_type == RESET):
         parsed_msg0 = "reset"
-    elif (msg_type == INDICATE):
-        parsed_msg0 = "indicate"
+    elif (msg_type == INDICATING):
+        parsed_msg0 = "indicating"
     elif (msg_type == NEW_NODE):
         parsed_msg0 = "new node"
     elif (msg_type == NODE_LOST):
@@ -90,7 +91,7 @@ def craftMessage(msg_type, name, num=None, name2=None):
     # set first byte with message type
     if (msg_type == "reset"):
         msg_int = msg_int | (RESET << 56)
-    elif (msg_type == "indicate"):
+    elif (msg_type == "indicating"):
         msg_int = msg_int | (INDICATE << 56)
     elif (msg_type == "new node"):
         msg_int = msg_int | (NEW_NODE << 56)
@@ -100,6 +101,8 @@ def craftMessage(msg_type, name, num=None, name2=None):
         msg_int = msg_int | (RESET_ALL << 56)
     elif (msg_type == "ack"):
         msg_int = msg_int | (ACK << 56)
+    elif (msg_type == "do indicate"):
+        msg_int = msg_int | (DO_INDICATE << 56)
     else:
         print("Error: craftMessage cannot understand message type")
     
