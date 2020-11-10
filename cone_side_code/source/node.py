@@ -368,9 +368,13 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                 # do not send message back to whomst've sent it 
                 if conn == connect:
                     continue
-                
+                    
                 # send message
                 connectionSend(msg)
+                
+                unack_msgs_lock.acquire()
+                unack_msgs[(conn, msg_num, msg)] = 0
+                unack_msgs_lock.release()
             
             # send ack
             msg_ack = messages.craftMessage("ack", name, msg_num)
@@ -401,7 +405,11 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                     
                     # send message
                     connectionSend(msg)
-                
+                    
+                    unack_msgs_lock.acquire()
+                    unack_msgs[(conn, msg_num, msg)] = 0
+                    unack_msgs_lock.release()
+                    
             # send ack
             msg_ack = messages.craftMessage("ack", name, msg_num)
             connect.connectionSend(msg_ack)
@@ -428,6 +436,10 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                 
                 # send message
                 connectionSend(msg)
+                
+                unack_msgs_lock.acquire()
+                unack_msgs[(conn, msg_num, msg)] = 0
+                unack_msgs_lock.release()
             
             # send ack
             msg_ack = messages.craftMessage("ack", name, msg_num)
