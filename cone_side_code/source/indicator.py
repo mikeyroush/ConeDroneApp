@@ -1,18 +1,18 @@
-import board
 import time
+import board
 import neopixel
 import sys
 import signal
 import RPi.GPIO as GPIO
 
 
-numPixels = 10
+numPixels = 30
 pixels = neopixel.NeoPixel(board.D21, numPixels) #Connected to GPIO 21
 SERVO_PWM = 12 #I don't know what these should be 
 
 #set up for pin 12 PWM. 
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(12, GPIO.OUT)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(SERVO_PWM, GPIO.OUT)
 
 def clearLEDS():
     pixels.fill((0, 0, 0))
@@ -25,7 +25,7 @@ def indicator_led(indicate, startup):
     pixel1 = 0
     pixel2 = 1
     i = 0
-    desiredRotations = 5
+    desiredRotations = 2
     if (indicate):
         while(i < (numPixels * desiredRotations - 1) ):
             clearLEDS()
@@ -51,11 +51,10 @@ def indicator_led(indicate, startup):
 
 
 def indicator_flag(indicate):
-    p = GPIO.PWM(12, 50) #pin 12, 50 Hz (20ms period)
+    p = GPIO.PWM(SERVO_PWM, 50) #pin 12, 50 Hz (20ms period)
     if(indicate == True):
         p.start(7) #7% duty cycle, go to 90 degrees
     else:
         p.start(12) #12% duty cycle, go back to 180 degrees. 
     time.sleep(.02)
     p.stop()
-    return FLAG

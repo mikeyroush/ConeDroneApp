@@ -9,9 +9,7 @@ import schedule
 
 SDA_PIN = 3 #I don't think these are strictly necessary but I'm leaving them anyway
 SCL_PIN = 5
-PIN6_PIN = 37 #pin 6 on the sensor, which is used to check when data is ready. AKA: when a reading is taken!
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(PIN6_PIN, GPIO.IN) 
+PIN6_PIN = 16 #pin 6 on the sensor, which is used to check when data is ready. AKA: when a reading is taken!
 
 global dist
 ################################################################################################################
@@ -29,7 +27,7 @@ with SMBus(1) as bus:
     #minimum amplitude, and minimum/maximum distances work just fine with the default values (100, and .2m and 8m respectively).
     #reads below the amplitude get set to the dummy value, which is 0. IE: uncertain things get sent to the Zero Distance box, which we already don't care about.
 
-GPIO.setmode(GPIO.BOARD) #use pin numbers instead of GPIO numbers. This'll probably be changed as this section of code is integrated with the rest.
+GPIO.setmode(GPIO.BCM) #use pin numbers instead of GPIO numbers. This'll probably be changed as this section of code is integrated with the rest.
 GPIO.setup(PIN6_PIN, GPIO.IN) #gotta read from
 ################################################################################################################
 
@@ -45,7 +43,7 @@ def checkSensor(distance_arr):
     
     #TFLuna stores data in 2 registers, one byte each. First is the low half of the result, second is the high half.
     with SMBus(1) as bus:
-        dist = bus.read_byte_data(0x10, 0x00)
+        dist = bus.read_byte_data(0x10, 0x00)#
         dist = dist + (bus.read_byte_data(0x10, 0x01) << 8)
 
     #package information to be sent out (gotta do it weird due to how schedule works)
@@ -53,11 +51,7 @@ def checkSensor(distance_arr):
     distance_arr[1] = dist
 
 def interpretDistance(distance):
-    if (distance > 400 and distance < 1000): #sensor distance is in cm
-        print("flyover detected, activating indication")
-        #call the indication function
-        #not sure how to do that yet, need to get in touch with nick
-
+    return (distance > 195 and distance < 1000) #sensor distance is in cm
 
 ################################################################################################################
 #schedule setup
