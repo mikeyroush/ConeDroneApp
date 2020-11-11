@@ -277,10 +277,8 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
         # if we were told to reset
         if reset:
             
-            # TODO: turn off lights, flag
-            #indicator.indicate(False)
+            indicator.indicatorStop()
             
-            indicating = False
             # do reset stuff
             reset = False
             reset_lock.release()
@@ -295,17 +293,13 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
             
             # check for indication
             #check if the sensor needs to be checked, if yes record values and continue
+            
             schedule.run_pending()
-            indicate, dist = sensor.checkSensor()
+            [indicate, dist] = distance_arr #distance_arr is set by the schedule sensor job
             
             if indicate:
+                indicator.indicatorStart(False)
 
-                # TODO: turn on lights, flag
-                #indicator.indicate(True)
-
-                # set the flag
-                #indicating = True
-                
                 # create the indication message
                 msg_indicating = messages.craftMessage("indicating", name)
                 msg_num = int.from_bytes(msg_indicating[4:], "big")
@@ -317,10 +311,6 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
                     unack_msgs[(connect, msg_num, msg_indicating)] = 0
                     unack_msgs_lock.release()
                     
-                indicator.indicator_flag(True)
-                indicator.indicator_led(True, False)
-                indicator.indicator_flag(False)
-                indicator.indicator_led(False, False)
     '''
     while True:
         pass

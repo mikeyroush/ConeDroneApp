@@ -28,9 +28,8 @@ def lowerFlag():
 '''
 Displays a revolving pair of lights that circle around the LED strip
 '''
-def indicator_thread(startup, lock):
+def indicatorThread(startup, lock):
     p = GPIO.PWM(SERVO_PWM, 50)
-    print("Starting indicator thread")
     pixel1 = 0
     pixel2 = 1
     
@@ -57,20 +56,17 @@ def indicator_thread(startup, lock):
             pixel2 = 0
 
         time.sleep(0.1)
-    print("indicator thread closing")
     return
     
 
-def indicator_start(startup):
+def indicatorStart(startup):
     indicate_lock.release()
-    inner_thread = threading.Thread(target=indicator_thread, args=(startup, indicate_lock))
+    inner_thread = threading.Thread(target=indicatorThread, args=(startup, indicate_lock))
     inner_thread.start()
     
 #stop the inner_thread loop, lower the flag, and clear the LEDs. 
-def indicator_stop():
-    print("stopping the indicatore")
+def indicatorStop():
     indicate_lock.acquire()
-    #inner_thread.join() #This seems to yield "can't join before it's started"?
     p = GPIO.PWM(SERVO_PWM, 50)
     p.start(12) #12% duty cycle, go back to 180 degrees. 
     p.ChangeDutyCycle(12)
