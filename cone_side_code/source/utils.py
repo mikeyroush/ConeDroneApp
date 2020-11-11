@@ -124,6 +124,7 @@ def establishConnection(address, server_sock, name):
     # server port on other node -- this is standard
     port = 0x1001
     
+    print(address, port)
     # connect to other node 
     send_sock.connect((address, port))
     
@@ -137,7 +138,7 @@ def establishConnection(address, server_sock, name):
     ack = recv_sock.recv(8)
     print("received [%s]" % ack)
     
-    if ((int.from_bytes(ack) & 0xFF00000000000000) >> 56):
+    if ((int.from_bytes(ack, "big") & 0xFF00000000000000) >> 56):
         phone_found = True
     else:
         phone_found = False
