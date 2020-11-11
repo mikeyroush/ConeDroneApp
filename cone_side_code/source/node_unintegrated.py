@@ -12,21 +12,23 @@ import threading
 import time
 import sys
 import messages
-import sensor
-import indicator
+#import sensor
+#import indicator
 
 # global VARIABLES
-address = ""            # not modified after definition
-name = ""               # not modified after definition
-server_port = 0x1001    # constant, port that all nodes accept connections on 
-server_sock = None      # socket that this node accepts connections on 
-connections = []        # modified
-reset = False           # modified
-last_reset = ""         # modified
-message_queue = []      # modified 
-MSG_Q_LEN = 50          # constant
-unack_msgs = {}         # modified 
-indicating = False      # modified
+address = ""                # not modified after definition
+name = ""                   # not modified after definition
+server_port = 0x1001        # constant, port that all nodes accept connectoins on 
+server_sock = None          # socket that this node accepts connections on 
+connections = []            # modified
+reset = False               # modified
+last_reset = ""             # modified
+message_queue = []          # modified 
+MSG_Q_LEN = 50              # constant
+unack_msgs = {}             # modified 
+indicating = False          # modified
+do_phone_discover = True    # modified
+phone_connection = None     # modified
 
 '''
 main
@@ -86,7 +88,7 @@ def main():
     connections_lock = threading.Lock()
     message_queue_lock = threading.Lock()
     unack_msgs_lock = threading.Lock()
-    
+
     if do_phone_discover:
         phone_listener_thread = threading.Thread(target=phoneListenerThread, args=(unack_msgs_lock,))
         phone_listener_thread.start()
@@ -252,7 +254,7 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
     global reset
     global name
     global indicating
-    
+    '''
     distance_arr = [False, 0]
     schedule.every(.008).seconds.do(sensor.checkSensor, distance_arr = [False,0])
 
@@ -274,7 +276,7 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
         elif indicating:
             reset_lock.release()    
             
-        # check for flyovers
+        # check for indication
         else:
             reset_lock.release()
             
@@ -309,7 +311,7 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
     '''
     while True:
         pass
-    '''
+    
 
 '''
 message_thread
@@ -335,7 +337,6 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
     global connections
     global reset
     global last_reset
-    global do_phone_discover
     
     while True:
         
@@ -556,7 +557,7 @@ def phoneListenerThread(unack_msgs_lock):
         
     print("closing phone listener thread")
 
-
+    
 if __name__ == "__main__":
     main()
 
