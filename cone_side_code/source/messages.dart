@@ -2,6 +2,7 @@
 // ooooooooh
 
 import 'dart:typed_data';
+import 'dart:math';
 
 /*
 
@@ -44,7 +45,7 @@ List parseMessage(msg) {
       break;
 		}
 		case 1: {
-			// indicate
+			// indicating
 			msg_type = "indicating";
       break;
 		}
@@ -72,6 +73,18 @@ List parseMessage(msg) {
 			// do indicate
 			msg_type = "do indicate"
 	  break;
+		case 7: {
+			// phone connect
+			// I don't think the phone will ever receive this message
+			print("whaddaya lookin at");
+	  break;
+		}
+		case 8: {
+			// phone lost
+			// I don't think the phone will ever receive this message
+			print("uh huh");
+	  break;
+		}
   }
 			
 	var msg_node = "dronecone" + (first_num & 0x00000FFF).toString();
@@ -97,13 +110,16 @@ Uint8List craftMessage(type, name, {num : -1, name2: "dronecone???"}) {
 	
 	switch (type) {
 		case "reset": {
+			// msg_int = msg_int | 0x0000000000000000
 			break;
 		}
 		case "indicating": {
+			// should never have to craft this message on phone
 			msg_int = msg_int | 0x0100000000000000;
 			break;
 		}
 		case "new node": {
+			// should never have to craft this message on phone
 			msg_int = msg_int | 0x0200000000000000;
 			break;
 		}
@@ -123,6 +139,15 @@ Uint8List craftMessage(type, name, {num : -1, name2: "dronecone???"}) {
 			msg_int = msg_int | 0x0600000000000000;
 			break;
 		}
+		case "phone connect": {
+			// should never have to craft this message on phone
+			msg_int = msg_int | 0x0700000000000000;
+			break;
+		}
+		case "phone lost": {
+			// should never have to craft this message on phone
+			msg_int = msg_int | 0x0800000000000000;
+		}
 	}
 	
 	if (name2 != "dronecone???") {
@@ -138,6 +163,11 @@ Uint8List craftMessage(type, name, {num : -1, name2: "dronecone???"}) {
 	if (num != -1) {
 		var msg_num = int.parse(num);
 		msg_int = msg_int | (msg_num);
+	} else {
+		var rand = new Random();
+	    var values = List<int>.generate(4, (i) => rand.nextInt(256));  	  
+	    var num = values[3] | (values[2] << 8) | (values[1] << 16) | (values[0] << 24);
+		msg_int = msg_int | (num);
 	}
 	
 	var msg = new Uint8List(8);
