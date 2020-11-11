@@ -49,7 +49,7 @@ def main():
     global do_phone_discover
     
     # begin start-up indicating
-    #indicator.indicate(True, True)
+    indicator.indicatorStart(True)
     
     # make sure hci0 is up
     code = utils.enableBluetooth()
@@ -116,7 +116,7 @@ def main():
         connect.thread.start()
     
     # stop start-up indicating
-    #indicator.indicate(False)
+    indicator.indicatorStop()
     
     # main thread becomes the thread that maintains the unack_msgs dictionary
     while True:
