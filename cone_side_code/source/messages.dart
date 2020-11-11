@@ -86,8 +86,8 @@ List parseMessage(msg) {
 			print("uh huh");
 	  break;
 		}
-  }
-			
+    }
+	
 	var msg_node = "dronecone" + (first_num & 0x00000FFF).toString();
 	
     var msg_num = second_num.toString();
