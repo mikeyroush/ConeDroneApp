@@ -73,6 +73,7 @@ List parseMessage(msg) {
 			// do indicate
 			msg_type = "do indicate"
 	  break;
+	    }
 		case 7: {
 			// phone connect
 			// I don't think the phone will ever receive this message
@@ -101,7 +102,7 @@ List parseMessage(msg) {
 	msg_info[2] = msg_num;
 	msg_info[3] = msg_node2;
   
-  return msg_info;
+	return msg_info;
 }
 
 Uint8List craftMessage(type, name, {num : -1, name2: "dronecone???"}) {
