@@ -43,9 +43,10 @@ def main():
     global message_queue
     global unack_msgs
     global connections
+    global name
     
     # begin start-up indicating
-    indicator.indicate(True, True)
+    #indicator.indicate(True, True)
     
     # make sure hci0 is up
     code = utils.enableBluetooth()
@@ -104,7 +105,7 @@ def main():
         connect.thread.start()
     
     # stop start-up indicating
-    indicator.indicate(False)
+    #indicator.indicate(False)
     
     # main thread becomes the thread that maintains the unack_msgs dictionary
     while True:
@@ -249,7 +250,7 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
     global indicating
     
     distance_arr = [False, 0]
-    schedule.every(.008).seconds.do(sensor.checkSensor, distance_arr = blar)
+    schedule.every(.008).seconds.do(sensor.checkSensor, distance_arr = [False,0])
 
     while True:
         reset_lock.acquire()
@@ -258,7 +259,7 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
         if reset:
             
             # TODO: turn off lights, flag
-            indicator.indicate(False)
+            #indicator.indicate(False)
             
             indicating = False
             # do reset stuff
@@ -281,21 +282,26 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
             if indicate:
 
                 # TODO: turn on lights, flag
-                indicator.indicate(True)
+                #indicator.indicate(True)
 
                 # set the flag
-                indicating = True
+                #indicating = True
                 
                 # create the indication message
-                msg_indicate = messages.craftMessage("indicate", name)
-                msg_num = int.from_bytes(msg_indicate[4:], "big")
+                msg_indicating = messages.craftMessage("indicating", name)
+                msg_num = int.from_bytes(msg_indicating[4:], "big")
                 
                 # tell the whole world
-                for connect in node.connections:
-                    connect.connectionSend(msg)
+                for connect in connections.copy():
+                    connect.connectionSend(msg_indicating)
                     unack_msgs_lock.acquire()
-                    unack_msgs[(connect, msg_num, msg_indicate)] = 0
+                    unack_msgs[(connect, msg_num, msg_indicating)] = 0
                     unack_msgs_lock.release()
+                    
+                indicator.indicator_flag(True)
+                indicator.indicator_led(True, False)
+                indicator.indicator_flag(False)
+                indicator.indicator_led(False, False)
     '''
     while True:
         pass
@@ -362,7 +368,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
         # handle message
         
         # indicate, new node, and node lost are all for the phone, never for node
-        if (msg_type == "indicate" or msg_type == "new node" or msg_type == "node lost"):
+        if (msg_type == "indicating" or msg_type == "new node" or msg_type == "node lost"):
             # pass it on
             for conn in connections:
                 # do not send message back to whomst've sent it 
