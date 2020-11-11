@@ -18,7 +18,7 @@ import indicator
 # global VARIABLES
 address = ""            # not modified after definition
 name = ""               # not modified after definition
-server_port = 0x1001    # constant, port that all nodes accept connectoins on 
+server_port = 0x1001    # constant, port that all nodes accept connections on 
 server_sock = None      # socket that this node accepts connections on 
 connections = []        # modified
 reset = False           # modified
@@ -81,7 +81,7 @@ def main():
             connect = connection.Connection(recv_sock, send_sock, address, port, name)
             connections.append(connect)
 
-    # locks for synchronization
+    # create locks for synchronization
     reset_lock = threading.Lock()
     connections_lock = threading.Lock()
     message_queue_lock = threading.Lock()
@@ -270,7 +270,7 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
         elif indicating:
             reset_lock.release()    
             
-        # check for indication
+        # check for flyovers
         else:
             reset_lock.release()
             
