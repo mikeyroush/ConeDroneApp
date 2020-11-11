@@ -46,6 +46,7 @@ def main():
     global unack_msgs
     global connections
     global name
+    global do_phone_discover
     
     # begin start-up indicating
     #indicator.indicate(True, True)
@@ -79,9 +80,12 @@ def main():
     if target_addresses:
         for address in target_addresses:
             print("establishing connection with " + address)
-            (recv_sock,send_sock,address,port) = utils.establishConnection(address, server_sock, name)
+            (recv_sock,send_sock,address,port,phone) = utils.establishConnection(address, server_sock, name)
             connect = connection.Connection(recv_sock, send_sock, address, port, name)
             connections.append(connect)
+            if phone:
+                print("phone already found")
+                do_phone_discover=False
 
     # locks for synchronization
     reset_lock = threading.Lock()
@@ -90,6 +94,7 @@ def main():
     unack_msgs_lock = threading.Lock()
 
     if do_phone_discover:
+        print("doing phone discovery")
         phone_listener_thread = threading.Thread(target=phoneListenerThread, args=(unack_msgs_lock,))
         phone_listener_thread.start()
 
