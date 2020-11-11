@@ -16,17 +16,19 @@ import sensor
 import indicator
 
 # global VARIABLES
-address = ""            # not modified after definition
-name = ""               # not modified after definition
-server_port = 0x1001    # constant, port that all nodes accept connections on 
-server_sock = None      # socket that this node accepts connections on 
-connections = []        # modified
-reset = False           # modified
-last_reset = ""         # modified
-message_queue = []      # modified 
-MSG_Q_LEN = 50          # constant
-unack_msgs = {}         # modified 
-indicating = False      # modified
+address = ""                # not modified after definition
+name = ""                   # not modified after definition
+server_port = 0x1001        # constant, port that all nodes accept connections on 
+server_sock = None          # socket that this node accepts connections on 
+connections = []            # modified
+reset = False               # modified
+last_reset = ""             # modified
+message_queue = []          # modified 
+MSG_Q_LEN = 50              # constant
+unack_msgs = {}             # modified 
+indicating = False          # modified
+do_phone_discover = True    # modified
+phone_connection = None     # modified
 
 '''
 main
@@ -182,6 +184,7 @@ def listener_thread(server_sock, connections_lock, name, unack_msgs_lock, messag
     global reset
     global last_reset
     global connections
+    global phone_connection
 
     print("listener thread launched")
        
@@ -201,8 +204,15 @@ def listener_thread(server_sock, connections_lock, name, unack_msgs_lock, messag
         send_sock = bluetooth.BluetoothSocket(bluetooth.L2CAP)
         send_sock.connect((str(address[0]), 0x1001))
         
+        # create ack message
+        ack_int = int(name[9:])
+        
+        # if we have the phone, make first byte 0x01
+        if phone_connection:
+            ack_int = ack_int | 0x0100000000000000        
+        
         # send acknowledgement
-        send_sock.sendall("acknowledged")
+        send_sock.sendall(ack_int.to_bytes(8, "big"))
         
         # new connection name 
         new_name = "dronecone" + str(int.from_bytes(data, "big"))
@@ -341,6 +351,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
     global reset
     global last_reset
     global do_phone_discover
+    global phone_connection
     
     while True:
         

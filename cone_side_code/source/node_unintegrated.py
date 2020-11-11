@@ -199,12 +199,19 @@ def listener_thread(server_sock, connections_lock, name, unack_msgs_lock, messag
         print(str(type(data)))
         print("received [%s]" % data)
         
-        # set up reverse connection 
+       # set up reverse connection 
         send_sock = bluetooth.BluetoothSocket(bluetooth.L2CAP)
         send_sock.connect((str(address[0]), 0x1001))
         
+        # create ack message
+        ack_int = int(name[9:])
+        
+        # if we have the phone, make first byte 0x01
+        if phone_connection:
+            ack_int = ack_int | 0x0100000000000000        
+        
         # send acknowledgement
-        send_sock.sendall("acknowledged")
+        send_sock.sendall(ack_int.to_bytes(8, "big"))
         
         # new connection name 
         new_name = "dronecone" + str(int.from_bytes(data, "big"))
