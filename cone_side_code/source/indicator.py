@@ -4,13 +4,12 @@ import neopixel
 import sys
 import signal
 import RPi.GPIO as GPIO
-
+import threading 
 
 numPixels = 30
 pixels = neopixel.NeoPixel(board.D21, numPixels) #Connected to GPIO 21
-SERVO_PWM = 12 #I don't know what these should be 
+SERVO_PWM = 12 
 
-#set up for pin 12 PWM. 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(SERVO_PWM, GPIO.OUT)
 
