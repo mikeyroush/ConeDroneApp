@@ -374,22 +374,31 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
         
         # indicate, new node, and node lost are all for the phone, never for node
         if (msg_type == "indicating" or msg_type == "new node" or msg_type == "node lost"):
-            # pass it on
-            for conn in connections:
-                # do not send message back to whomst've sent it 
-                if conn == connect:
-                    continue
-                    
-                # send message
-                connectionSend(msg)
+            # do we have the phone?
+            if phone_connection:
+                # send message to the phone
+                phone_connection.connectionSend(msg)
                 
                 unack_msgs_lock.acquire()
-                unack_msgs[(conn, msg_num, msg)] = 0
+                unack_msgs[(phone_connection, msg_num, msg)] = 0
                 unack_msgs_lock.release()
-            
-            # send ack
-            msg_ack = messages.craftMessage("ack", name, msg_num)
-            connect.connectionSend(msg_ack)
+            else:
+                # pass it on
+                for conn in connections:
+                    # do not send message back to whomst've sent it 
+                    if conn == connect:
+                        continue
+                        
+                    # send message
+                    connectionSend(msg)
+                    
+                    unack_msgs_lock.acquire()
+                    unack_msgs[(conn, msg_num, msg)] = 0
+                    unack_msgs_lock.release()
+                
+                # send ack
+                msg_ack = messages.craftMessage("ack", name, msg_num)
+                connect.connectionSend(msg_ack)
             
         # could be for us, we should check
         elif (msg_type == "reset"):
@@ -469,11 +478,58 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                     break
             unack_msgs_lock.release()
             
+        # could be for us, we should check
+        elif (msg_type == "do indicate"):
+            print("handling do indicate")
+            pass
+            
+        # is for us and everyone else
         elif (msg_type == "phone connect"):
             print("handling phone connect")
             
             # we are no longer responsible for connecting to the phone
             do_phone_discover = False
+            
+            #  pass message on 
+            for conn in connections:
+                # do not send message back to whomst've sent it 
+                if conn == connect:
+                    continue
+                
+                # send message
+                connectionSend(msg)
+                
+                unack_msgs_lock.acquire()
+                unack_msgs[(conn, msg_num, msg)] = 0
+                unack_msgs_lock.release()
+            
+            # send ack
+            msg_ack = messages.craftMessage("ack", name, msg_num)
+            connect.connectionSend(msg_ack)
+            
+        # is for us and everyone else
+        elif (msg_type == "phone lost"):
+            print("handling phone lost")
+            
+            # we are potentially responsible for connecting to the phone
+            do_phone_discover = True
+            
+            # we need to start a phone listener thread and try to connect
+            phone_listener_thread = threading.Thread(target=phoneListenerThread, args=(unack_msgs_lock,))
+            phone_listener_thread.start()
+            
+            #  pass message on 
+            for conn in connections:
+                # do not send message back to whomst've sent it 
+                if conn == connect:
+                    continue
+                
+                # send message
+                connectionSend(msg)
+                
+                unack_msgs_lock.acquire()
+                unack_msgs[(conn, msg_num, msg)] = 0
+                unack_msgs_lock.release()
             
             # send ack
             msg_ack = messages.craftMessage("ack", name, msg_num)
