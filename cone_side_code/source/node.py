@@ -562,7 +562,8 @@ def phoneListenerThread(unack_msgs_lock):
     phone_server_port = 0
     phone_server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
     phone_server_sock.bind(("", phone_server_port))
-    phone_server_sock.settimeout(10)
+    #phone_server_sock.settimeout(10)
+    phone_server_sock.setblocking(0)
     phone_server_sock.listen(1)
     
     #advertise service
@@ -577,7 +578,8 @@ def phoneListenerThread(unack_msgs_lock):
             phone_client_sock, info = phone_server_sock.accept()
             print("accepted phone connection; " + str(info[0]))
             phone_addr = info[0]
-            phone_client_sock.settimeout(10)
+            #phone_client_sock.settimeout(10)
+            phone_client_sock.setblocking(0)
             break
         except Exception as e:
             print("ya know")
@@ -613,8 +615,10 @@ def phoneListenerThread(unack_msgs_lock):
         
         do_phone_discover = False
         
-        phone_server_sock.settimeout(None)
-        phone_client_sock.settimeout(None)
+        #phone_server_sock.settimeout(None)
+        #phone_client_sock.settimeout(None)
+        phone_server_sock.setblocking(1)
+        phone_client_sock.setblocking(1)
         
     print("closing phone listener thread")
 
