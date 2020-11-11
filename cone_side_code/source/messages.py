@@ -111,7 +111,7 @@ def craftMessage(msg_type, name, num=None, name2=None):
         msg_int = msg_int | (ACK << 56)
     elif (msg_type == "do indicate"):
         msg_int = msg_int | (DO_INDICATE << 56)
-    elif (msg_type == "phone found"):
+    elif (msg_type == "phone connect"):
         msg_int = msg_int | (PHONE_CONNECT << 56)
     elif (msg_type == "phone lost"):
         msg_int = msg_int | (PHONE_LOST << 56)
