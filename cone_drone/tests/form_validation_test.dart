@@ -25,7 +25,7 @@ void main() {
     expect(result, FormValidator.passwordMessage);
   });
 
-  test('Password of 6+ chars returns null', () {
+  test('Password of 8+ chars returns null', () {
     var result = FormValidator.validatePassword('password');
     expect(result, null);
   });
@@ -51,7 +51,7 @@ void main() {
   });
 
   test('Valid phone number returns null', () {
-    var result = FormValidator.validatePhone('+1 (979) 458-7447');
+    var result = FormValidator.validatePhone(''Enter an integer.'');
     expect(result, null);
   });
 

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_ble/flutter_ble.dart';
+import 'package:flutter_ble/flutter_serial.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
-import 'package:provider/provider.dart';
-import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -30,64 +28,91 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  Future<List<BluetoothDiscoveryResult>> _results;
-
-  @override
-  void initState() {
-    super.initState();
-    _updateDeviceResults();
-  }
-
-  Future<void> _updateDeviceResults() async {
-    _results = BluetoothManager.findDevices();
-    Timer(Duration(seconds: 5),
-        () => FlutterBluetoothSerial.instance.cancelDiscovery());
-  }
-
-  // Todo: fix swipe to refresh cone list
+  final BluetoothManager _bluetoothManager = BluetoothManager();
+  bool _showDevices = false;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: FutureBuilder<List<BluetoothDiscoveryResult>>(
-        future: _results,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return RefreshIndicator(
-              child: ListView.builder(
-                itemCount: snapshot.data.length,
-                itemBuilder: (context, index) {
-                  return BluetoothDeviceTile(result: snapshot.data[index]);
-                },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FlatButton.icon(
+              onPressed: () => setState(() => _showDevices = !_showDevices),
+              icon: Icon(
+                Icons.bluetooth,
+                color: Colors.white70,
               ),
-              onRefresh: _updateDeviceResults,
-            );
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error: ${snapshot.error.toString()}',
-                style: TextStyle(color: Colors.redAccent),
+              label: Text(
+                _showDevices ? 'Hide Devices' : 'Show Devices',
+                style: TextStyle(color: Colors.white70),
               ),
-            );
-          } else
-            return Center(child: CircularProgressIndicator());
-        },
+              color: Colors.blueGrey.shade800,
+            ),
+            if (_showDevices)
+              Expanded(
+                child: FutureBuilder<List<BluetoothDiscoveryResult>>(
+                  future: _bluetoothManager.findPis(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      snapshot.data.forEach((element) {
+                        print('Building: ${element.device.address}');
+                      });
+                      return ListView.builder(
+                        itemCount: snapshot.data.length,
+                        itemBuilder: (context, index) {
+                          return snapshot.data.length > 0
+                              ? BluetoothDeviceTile(
+                                  device: snapshot.data[index].device)
+                              : Padding(
+                                  padding: EdgeInsets.only(top: 8.0),
+                                  child: Card(
+                                    margin: EdgeInsets.fromLTRB(
+                                        20.0, 6.0, 20.0, 0.0),
+                                    child: ListTile(
+                                      leading: Icon(Icons.bluetooth,
+                                          color: Colors.black54),
+                                      title: Text('No cones found'),
+                                      subtitle: Text(
+                                          'Press the button twice to search again.'),
+                                    ),
+                                  ),
+                                );
+                        },
+                      );
+                    } else if (snapshot.hasError) {
+                      return Text(
+                        'Error: ${snapshot.error}',
+                        style: TextStyle(color: Colors.redAccent),
+                      );
+                    } else
+                      return Center(child: CircularProgressIndicator());
+                  },
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class BluetoothDeviceTile extends StatelessWidget {
-  final BluetoothDiscoveryResult result;
-  BluetoothDeviceTile({this.result});
+  final FlutterBluetoothSerial _bluetoothSerial =
+      FlutterBluetoothSerial.instance;
+  final BluetoothDevice device;
+  BluetoothDeviceTile({this.device});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () async {
         try {
+          print('Attempting to connect to: ${device.address}');
           BluetoothConnection connection =
-              await BluetoothConnection.toAddress(result.device.address);
+              await BluetoothConnection.toAddress(device.address);
           print('Connected to the device');
 
           connection.input.listen((Uint8List data) {
@@ -102,7 +127,8 @@ class BluetoothDeviceTile extends StatelessWidget {
             print('Disconnected by remote request');
           });
         } catch (exception) {
-          print('Cannot connect, exception occured');
+          print('Cannot connect, exception occurred');
+          print(exception.toString());
         }
       },
       child: Padding(
@@ -111,8 +137,8 @@ class BluetoothDeviceTile extends StatelessWidget {
           margin: EdgeInsets.fromLTRB(20.0, 6.0, 20.0, 0.0),
           child: ListTile(
             leading: Icon(Icons.bluetooth, color: Colors.black54),
-            title: Text('${result.device.name}'),
-            subtitle: Text('${result.device.address}'),
+            title: Text('${device.name ?? 'No Name'}'),
+            subtitle: Text('${device.address}'),
           ),
         ),
       ),
