@@ -29,6 +29,8 @@ unack_msgs = {}             # modified
 indicating = False          # modified
 do_phone_discover = True    # modified
 phone_connection = None     # modified
+phone_server_sock = None
+phone_client_sock = None
 
 '''
 main
@@ -95,7 +97,7 @@ def main():
 
     if do_phone_discover:
         print("doing phone discovery")
-        phone_listener_thread = threading.Thread(target=phoneListenerThread, args=(unack_msgs_lock,))
+        phone_listener_thread = threading.Thread(target=phoneListenerThread, args=(connections_lock,reset_lock,unack_msgs_lock,message_queue_lock,))
         phone_listener_thread.start()
 
     # declare listener and flyover thread 
@@ -361,7 +363,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
         
         # parse message
         msg_type, msg_node, msg_num, _ = messages.parseMessage(msg)
-        print(msg_type + " received from " + msg_node)
+        print(msg_type + " received from " + connect.name)
         
         # check if we have handled this before
         message_queue_lock.acquire()
@@ -416,6 +418,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
         # could be for us, we should check
         elif (msg_type == "reset"):
             if (name == msg_node):
+                print("it's for us")
                 # it's for you
                 reset_lock.acquire()
                 if not reset:
@@ -556,12 +559,14 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
         print("end of message thread loop")
         
 
-def phoneListenerThread(unack_msgs_lock):
+def phoneListenerThread(connections_lock,reset_lock,unack_msgs_lock,message_queue_lock):
 
     global do_phone_discover
     global phone_connection
     global name
     global connections
+    global phone_server_sock
+    global phone_client_sock
 
     print("phone listener thread start")
     
@@ -578,35 +583,51 @@ def phoneListenerThread(unack_msgs_lock):
                                 service_classes = [ bluetooth.SERIAL_PORT_CLASS ],
                                 profiles = [ bluetooth.SERIAL_PORT_PROFILE ])
     
+    
+    
     # try to accept unless we are told not to
     while do_phone_discover:
         try:
-            print("trying to accept phone connection")
             phone_client_sock, info = phone_server_sock.accept()
             print("accepted phone connection; " + str(info[0]))
             phone_addr = info[0]
             #phone_client_sock.settimeout(10)
             phone_client_sock.setblocking(0)
-            break
         except Exception as e:
-            print("ya know")
             continue
 
+        msg_connection = messages.craftMessage("connection", name)
+        num_exp = int.from_bytes(msg_connection[4:], "big")
+        print(msg_connection)
         while True:
             try:
-                phone_client_sock.sendall("hallo")
+                phone_client_sock.sendall(msg_connection)
+                break
             except Exception as e:
                 print("ya know")
                 continue
-           
-        data = phone_client_sock.recv(8)
-        print("received [%s]" % data)
+        
+        phone_client_sock.setblocking(1)
+        
+        while True:
+            try:
+                msg = phone_client_sock.recv(8)
+                msg_type, phone_name, msg_num, __ = messages.parseMessage(msg)
+                #if (msg_num != num_exp):
+                #    print("number not correct")
+                print("received [%s]" % msg)
+                print(phone_name)
+                break;
+            except Exception as e:
+                print(e)
+                #print("oh, I know")
+                continue
         
         # initialize phone connection
-        phone_connection = connection.Connection(phone_client_sock, phone_server_sock, phone_addr, phone_server_port, "PHONE")
+        phone_connection = connection.Connection(phone_client_sock, phone_client_sock, phone_addr, phone_server_port, phone_name)
         
         # start phone messages thread
-        phone_thread = threading.Thread(target=message_thread, args=(phone_connection,connections.lock,reset_lock,unack_msgs_lock,message_queue_lock,reset_lock,name,))
+        phone_thread = threading.Thread(target=message_thread, args=(phone_connection,connections_lock,reset_lock,unack_msgs_lock,message_queue_lock,name,))
         phone_thread.start()
         
         # craft phone found message
@@ -627,6 +648,7 @@ def phoneListenerThread(unack_msgs_lock):
         phone_server_sock.setblocking(1)
         phone_client_sock.setblocking(1)
         
+    
     print("closing phone listener thread")
 
     
