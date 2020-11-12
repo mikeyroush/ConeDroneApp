@@ -18,7 +18,7 @@ import messages
 # global VARIABLES
 address = ""                # not modified after definition
 name = ""                   # not modified after definition
-server_port = 0x1001        # constant, port that all nodes accept connectoins on 
+server_port = 0x1001        # constant, port that all nodes accept connections on 
 server_sock = None          # socket that this node accepts connections on 
 connections = []            # modified
 reset = False               # modified
@@ -51,7 +51,7 @@ def main():
     global do_phone_discover
     
     # begin start-up indicating
-    #indicator.indicate(True, True)
+    #indicator.indicatorStart(True)
     
     # make sure hci0 is up
     code = utils.enableBluetooth()
@@ -118,7 +118,7 @@ def main():
         connect.thread.start()
     
     # stop start-up indicating
-    #indicator.indicate(False)
+    #indicator.indicatorStop()
     
     # main thread becomes the thread that maintains the unack_msgs dictionary
     while True:
@@ -186,6 +186,7 @@ def listener_thread(server_sock, connections_lock, name, unack_msgs_lock, messag
     global reset
     global last_reset
     global connections
+    global phone_connection
 
     print("listener thread launched")
        
@@ -351,6 +352,8 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
     global connections
     global reset
     global last_reset
+    global do_phone_discover	
+    global phone_connection
     
     while True:
         
