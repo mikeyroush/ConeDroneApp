@@ -87,7 +87,7 @@ Forms a message given the message type and name
 Returns:
     bytes msg : the message to be sent, in bytes
 Arguments:
-    string msg_type : "reset", "indicate", "new node", "node lost", or "reset all"
+    string msg_type : "reset", "indicating", "new node", "node lost", or "reset all"
     string name : hostname of the node ("dronecone" and a number)
     string num : message number (only passed in for acks)
     string name2 : hostname of the other node (only used for new node and node lost)
@@ -100,7 +100,7 @@ def craftMessage(msg_type, name, num=None, name2=None):
     if (msg_type == "reset"):
         msg_int = msg_int | (RESET << 56)
     elif (msg_type == "indicating"):
-        msg_int = msg_int | (INDICATE << 56)
+        msg_int = msg_int | (INDICATING << 56)
     elif (msg_type == "new node"):
         msg_int = msg_int | (NEW_NODE << 56)
     elif (msg_type == "node lost"):
@@ -111,7 +111,7 @@ def craftMessage(msg_type, name, num=None, name2=None):
         msg_int = msg_int | (ACK << 56)
     elif (msg_type == "do indicate"):
         msg_int = msg_int | (DO_INDICATE << 56)
-    elif (msg_type == "phone found"):
+    elif (msg_type == "phone connect"):
         msg_int = msg_int | (PHONE_CONNECT << 56)
     elif (msg_type == "phone lost"):
         msg_int = msg_int | (PHONE_LOST << 56)

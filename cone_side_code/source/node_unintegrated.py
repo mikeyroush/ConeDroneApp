@@ -12,13 +12,13 @@ import threading
 import time
 import sys
 import messages
-import sensor
-import indicator
+#import sensor
+#import indicator
 
 # global VARIABLES
 address = ""                # not modified after definition
 name = ""                   # not modified after definition
-server_port = 0x1001        # constant, port that all nodes accept connections on 
+server_port = 0x1001        # constant, port that all nodes accept connectoins on 
 server_sock = None          # socket that this node accepts connections on 
 connections = []            # modified
 reset = False               # modified
@@ -49,7 +49,7 @@ def main():
     global do_phone_discover
     
     # begin start-up indicating
-    indicator.indicatorStart(True)
+    #indicator.indicate(True, True)
     
     # make sure hci0 is up
     code = utils.enableBluetooth()
@@ -92,7 +92,7 @@ def main():
     connections_lock = threading.Lock()
     message_queue_lock = threading.Lock()
     unack_msgs_lock = threading.Lock()
-    
+
     if do_phone_discover:
         print("doing phone discovery")
         phone_listener_thread = threading.Thread(target=phoneListenerThread, args=(unack_msgs_lock,))
@@ -116,7 +116,7 @@ def main():
         connect.thread.start()
     
     # stop start-up indicating
-    indicator.indicatorStop()
+    #indicator.indicate(False)
     
     # main thread becomes the thread that maintains the unack_msgs dictionary
     while True:
@@ -184,7 +184,6 @@ def listener_thread(server_sock, connections_lock, name, unack_msgs_lock, messag
     global reset
     global last_reset
     global connections
-    global phone_connection
 
     print("listener thread launched")
        
@@ -200,7 +199,7 @@ def listener_thread(server_sock, connections_lock, name, unack_msgs_lock, messag
         print(str(type(data)))
         print("received [%s]" % data)
         
-        # set up reverse connection 
+       # set up reverse connection 
         send_sock = bluetooth.BluetoothSocket(bluetooth.L2CAP)
         send_sock.connect((str(address[0]), 0x1001))
         
@@ -267,7 +266,7 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
     global reset
     global name
     global indicating
-    
+    '''
     distance_arr = [False, 0]
     schedule.every(.008).seconds.do(sensor.checkSensor, distance_arr = [False,0])
 
@@ -277,8 +276,10 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
         # if we were told to reset
         if reset:
             
-            indicator.indicatorStop()
+            # TODO: turn off lights, flag
+            #indicator.indicate(False)
             
+            indicating = False
             # do reset stuff
             reset = False
             reset_lock.release()
@@ -287,19 +288,23 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
         elif indicating:
             reset_lock.release()    
             
-        # check for flyovers
+        # check for indication
         else:
             reset_lock.release()
             
             # check for indication
             #check if the sensor needs to be checked, if yes record values and continue
-            
             schedule.run_pending()
-            [indicate, dist] = distance_arr #distance_arr is set by the schedule sensor job
+            indicate, dist = sensor.checkSensor()
             
             if indicate:
-                indicator.indicatorStart(False)
 
+                # TODO: turn on lights, flag
+                #indicator.indicate(True)
+
+                # set the flag
+                #indicating = True
+                
                 # create the indication message
                 msg_indicating = messages.craftMessage("indicating", name)
                 msg_num = int.from_bytes(msg_indicating[4:], "big")
@@ -311,10 +316,14 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock):
                     unack_msgs[(connect, msg_num, msg_indicating)] = 0
                     unack_msgs_lock.release()
                     
+                indicator.indicator_flag(True)
+                indicator.indicator_led(True, False)
+                indicator.indicator_flag(False)
+                indicator.indicator_led(False, False)
     '''
     while True:
         pass
-    '''
+    
 
 '''
 message_thread
@@ -340,8 +349,6 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
     global connections
     global reset
     global last_reset
-    global do_phone_discover
-    global phone_connection
     
     while True:
         
@@ -513,7 +520,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             msg_ack = messages.craftMessage("ack", name, msg_num)
             connect.connectionSend(msg_ack)
             
-        # is for us and everyone else
+        # is for us and everyone else    
         elif (msg_type == "phone lost"):
             print("handling phone lost")
             
@@ -622,7 +629,7 @@ def phoneListenerThread(unack_msgs_lock):
         
     print("closing phone listener thread")
 
-
+    
 if __name__ == "__main__":
     main()
 
