@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ble/flutter_serial.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
-import 'dart:convert';
+import 'messages.dart';
 import 'dart:typed_data';
 
 void main() => runApp(MyApp());
@@ -100,8 +100,6 @@ class _HomePageState extends State<HomePage> {
 }
 
 class BluetoothDeviceTile extends StatelessWidget {
-  final FlutterBluetoothSerial _bluetoothSerial =
-      FlutterBluetoothSerial.instance;
   final BluetoothDevice device;
   BluetoothDeviceTile({this.device});
 
@@ -110,19 +108,30 @@ class BluetoothDeviceTile extends StatelessWidget {
     return InkWell(
       onTap: () async {
         try {
-          print('Attempting to connect to: ${device.address}');
           BluetoothConnection connection =
               await BluetoothConnection.toAddress(device.address);
           print('Connected to the device');
 
           connection.input.listen((Uint8List data) {
-            print('Data incoming: ${ascii.decode(data)}');
-            connection.output.add(data); // Sending data
-
-            if (ascii.decode(data).contains('!')) {
-              connection.finish(); // Closing connection
-              print('Disconnecting by local host');
+            var msg = parseMessage(Uint8List.fromList(data));
+            print('Data incoming: $msg');
+            Uint8List out;
+            switch (msg[0]) {
+              case "connection":
+                {
+                  out = Uint8List.fromList(craftMessage(msg[0], device.name));
+                  break;
+                }
+              case "indicating":
+                {
+                  out = Uint8List.fromList(
+                      craftMessage("ack", device.name, num: msg[2]));
+                  break;
+                }
             }
+            print('Data outgoing: $out');
+            connection.output.add(out);
+            // connection.output.add(data); // Sending data
           }).onDone(() {
             print('Disconnected by remote request');
           });

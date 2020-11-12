@@ -54,5 +54,5 @@ class BluetoothManager {
     connection = await BluetoothConnection.toAddress(device.address);
   }
 
-  // add bluetooth communication
+// add bluetooth communication
 }
