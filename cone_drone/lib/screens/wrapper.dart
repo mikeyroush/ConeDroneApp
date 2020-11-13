@@ -5,7 +5,7 @@ import 'package:cone_drone/models/user.dart';
 import 'package:cone_drone/services/auth.dart';
 import 'package:cone_drone/screens/authenticate/authenticate.dart';
 import 'package:cone_drone/screens/verify_email.dart';
-import 'package:cone_drone/screens/menu_layout.dart';
+import 'package:cone_drone/screens/home_layout.dart';
 import 'package:cone_drone/screens/error_screen.dart';
 import 'package:cone_drone/screens/loading_screen.dart';
 import 'package:cone_drone/constants.dart';
@@ -51,7 +51,7 @@ class _WrapperState extends State<Wrapper> {
       auth.checkVerification();
       return user == null
           ? Authenticate()
-          : user.isVerified ? HomeScreen() : Verify();
+          : user.isVerified ? HomeLayout() : Verify();
     }
   }
 }

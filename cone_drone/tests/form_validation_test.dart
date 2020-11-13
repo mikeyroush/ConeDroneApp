@@ -51,7 +51,7 @@ void main() {
   });
 
   test('Valid phone number returns null', () {
-    var result = FormValidator.validatePhone(''Enter an integer.'');
+    var result = FormValidator.validatePhone('Enter an integer.');
     expect(result, null);
   });
 

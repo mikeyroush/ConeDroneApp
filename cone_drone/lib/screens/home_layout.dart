@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:scoped_model/scoped_model.dart';
 import 'package:cone_drone/screens/settings_form.dart';
 import 'package:cone_drone/screens/cone/cone_screen.dart';
 import 'package:cone_drone/screens/pilots/pilot_screen.dart';
 import 'package:cone_drone/screens/flight/flight_screen.dart';
 import 'package:cone_drone/services/auth.dart';
+import 'package:cone_drone/services/bluetooth.dart';
 import 'package:cone_drone/constants.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeLayout extends StatefulWidget {
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  _HomeLayoutState createState() => _HomeLayoutState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
+class _HomeLayoutState extends State<HomeLayout>
     with SingleTickerProviderStateMixin {
   final AuthService _auth = AuthService();
   AnimationController _controller;
@@ -51,12 +53,15 @@ class _HomeScreenState extends State<HomeScreen>
     screenWidth = size.width;
     return Scaffold(
       backgroundColor: Colors.blueGrey.shade700,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          menu(context),
-          screen(context),
-        ],
+      body: ScopedModel(
+        model: BluetoothManager(),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            menu(context),
+            screen(context),
+          ],
+        ),
       ),
     );
   }

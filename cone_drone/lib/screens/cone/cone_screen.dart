@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:scoped_model/scoped_model.dart';
+import 'package:cone_drone/services/bluetooth.dart';
+import 'package:cone_drone/screens/cone/bluetooth_list.dart';
+import 'package:cone_drone/screens/cone/cone_list.dart';
 import 'package:cone_drone/constants.dart';
-import 'package:cone_drone/components/rounded_botton.dart';
 
 enum Status { none, connected, disconnected }
 
@@ -10,96 +13,92 @@ class ConeScreen extends StatefulWidget {
 }
 
 class _ConeScreenState extends State<ConeScreen> {
-  // temp entries
-  List<ConeEntry> entries = [];
-
-  @override
-  void initState() {
-    super.initState();
-
-    // TODO: dynamically pull cone entries from somewhere
-    entries.removeRange(0, entries.length);
-    for (var i = 0; i < 50; i++) {
-      final entry = ConeEntry(
-        name: 'Cone $i',
-        status: (i % 2 == 0) ? Status.disconnected : Status.connected,
-      );
-      setState(() {
-        entries.add(entry);
-      });
-    }
-  }
+  bool _showDevices = false;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Connected Cones: ${entries.length}', style: kTextFieldStyle),
-          SizedBox(height: 8.0),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10.0),
-              child: Container(
-                color: Colors.blueGrey,
-                child: ListView(
-                  padding: const EdgeInsets.all(8.0),
-                  children: entries,
-                ),
-              ),
-            ),
-          ),
-          SizedBox(
-            width: double.infinity,
-            height: 65.0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              crossAxisAlignment: CrossAxisAlignment.center,
+    return ScopedModelDescendant<BluetoothManager>(
+      builder: (_, child, model) {
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Flexible(
-                  child: RoundedButton(
-                    title: 'Add Cone',
-                    backgroundColor: Colors.lightBlueAccent,
-                    onPress: () {},
+                if (!model.isConnected)
+                  FlatButton.icon(
+                    onPressed: () =>
+                        setState(() => _showDevices = !_showDevices),
+                    icon: Icon(
+                      Icons.bluetooth,
+                      color: Colors.white70,
+                    ),
+                    label: Text(
+                      _showDevices ? 'Hide Devices' : 'Show Devices',
+                      style: kTextFieldStyle,
+                    ),
+                    color: Colors.blueGrey.shade800,
                   ),
-                ),
-                SizedBox(width: 16.0),
-                Flexible(
-                  child: RoundedButton(
-                    title: 'Remove Cone',
-                    backgroundColor: Colors.blueAccent,
-                    onPress: () {},
+                if (_showDevices && !model.isConnected)
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blueGrey,
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: BluetoothList()),
+                  ),
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.all(8.0),
+                    margin: const EdgeInsets.only(top: 8.0),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white70,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(10.0),
+                        topRight: Radius.circular(10.0),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            "Host: ${model.hostName}",
+                            style: kMenuTextStyle.copyWith(
+                                color: model.isConnected
+                                    ? Colors.green.shade900
+                                    : Colors.redAccent),
+                          ),
+                        ),
+                        Expanded(child: ConeList()),
+                        if (model.isConnected)
+                          FlatButton.icon(
+                            onPressed: () => model.sendReset(),
+                            icon: Icon(
+                              Icons.refresh,
+                              color: Colors.white70,
+                            ),
+                            label: Text(
+                              'Reset Network',
+                              style: kTextFieldStyle,
+                            ),
+                            color: Colors.blueAccent,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-          )
-        ],
-      ),
-    );
-  }
-}
-
-class ConeEntry extends StatelessWidget {
-  ConeEntry({@required this.name, @required this.status});
-
-  final String name;
-  final Status status;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text('$name', style: kTextFieldStyle),
-        ),
-        Expanded(
-          child: Text(
-              'Status: ${status.toString().substring(status.toString().indexOf('.') + 1)}',
-              style: kTextFieldStyle),
-        ),
-      ],
+          ),
+        );
+      },
     );
   }
 }
