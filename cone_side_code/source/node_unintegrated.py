@@ -50,6 +50,9 @@ def main():
     global name
     global do_phone_discover
     
+    # DELETE ME
+    global indicating
+    
     # begin start-up indicating
     #indicator.indicatorStart(True)
     
@@ -146,14 +149,25 @@ def main():
                 # tell the phone that this connection doesn't exist any longer
                 msg_node_lost = messages.craftMessage("node lost", name, name2=tup[0].name)
                 msg_num = int.from_bytes(msg_node_lost[4:], "big")
-                for connect in connections.copy():
-                    if connect == tup[0]:
-                        connections.remove(connect)
-                        continue
-                    connect.connectionSend(msg_node_lost)
-                    unack_msgs_lock.acquire()
-                    unack_msgs[(conn, msg_num, msg_node_lost)] = 0
-                    unack_msgs_lock.release()
+                
+                message_queue_lock.acquire()
+                if len(message_queue) == MSG_Q_LEN:
+                    message_queue.pop(0)
+                message_queue.append(msg_num)
+                message_queue_lock.release()
+                
+                if phone_connection:
+                    phone_connection.connectionSend(msg_node_lost)
+                    unack_msgs[(phone_connection, msg_num, msg_node_lost)] = 0
+                else:
+                    for connect in connections.copy():
+                        if connect == tup[0]:
+                            connections.remove(connect)
+                            continue
+                        connect.connectionSend(msg_node_lost)
+                        unack_msgs_lock.acquire()
+                        unack_msgs[(conn, msg_num, msg_node_lost)] = 0
+                        unack_msgs_lock.release()
                 
                 continue
                 
@@ -238,14 +252,27 @@ def listener_thread(server_sock, connections_lock, name, unack_msgs_lock, messag
         msg_new_node = messages.craftMessage("new node", name, name2=connect.name)
         msg_num = int.from_bytes(msg_new_node[4:], "big")
         
-        for conn in connections.copy():
-            # send the new node message
-            conn.connectionSend(msg_new_node)
+        message_queue_lock.acquire()
+        if len(message_queue) == MSG_Q_LEN:
+            message_queue.pop(0)
+        message_queue.append(msg_num)
+        message_queue_lock.release()
+        
+        if phone_connection:
+            phone_connection.connectionSend(msg_new_node)
             
-            # add to unack_msgs
             unack_msgs_lock.acquire()
-            unack_msgs[(conn, msg_num, msg_new_node)] = 0
+            unack_msgs[(phone_connection, msg_num, msg_new_node)] = 0
             unack_msgs_lock.release()
+        else:
+            for conn in connections.copy():
+                # send the new node message
+                conn.connectionSend(msg_new_node)
+                
+                # add to unack_msgs
+                unack_msgs_lock.acquire()
+                unack_msgs[(conn, msg_num, msg_new_node)] = 0
+                unack_msgs_lock.release()
         
         print("listener thread loop end")
 
@@ -354,6 +381,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
     global last_reset
     global do_phone_discover	
     global phone_connection
+    global MSG_Q_LEN
     
     while True:
         
@@ -364,6 +392,49 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
         
         print("received [%s]" % msg)
         
+        # if the socket disconnected
+        if (len(msg) == 0):
+            print("connection lost")
+            
+            connect.connectionClose()
+            
+            msg_node_lost = messages.craftMessage("node lost", name, name2=connect.name)
+            msg_num = int.from_bytes(msg_node_lost[4:], "big")
+            
+            message_queue_lock.acquire()
+            if len(message_queue) == MSG_Q_LEN:
+                message_queue.pop(0)
+            message_queue.append(msg_num)
+            message_queue_lock.release()
+            
+            unack_msgs_lock.acquire()
+            for tup in unack_msgs.copy():
+                if tup[0] == connect:
+                    unack_msgs.pop(tup)
+            unack_msgs_lock.release()
+            
+            if phone_connection:
+                phone_connection.connectionSend(msg_node_lost)
+                
+                unack_msgs_lock.acquire()
+                unack_msgs[(phone_connection, msg_num, msg_node_lost)] = 0
+                unack_msgs_lock.release()
+            else:
+                for conn in connections.copy():
+                    # remove this connection
+                    if conn == connect:
+                        connections.remove(conn)
+                        continue
+                    # send the new node message
+                    conn.connectionSend(msg_node_lost)
+                    
+                    # add to unack_msgs
+                    unack_msgs_lock.acquire()
+                    unack_msgs[(conn, msg_num, msg_node_lost)] = 0
+                    unack_msgs_lock.release()
+            
+            break
+        
         # parse message
         msg_type, msg_node, msg_num, _ = messages.parseMessage(msg)
         print(msg_type + " received from " + connect.name)
@@ -373,7 +444,11 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
         msg_processed = False
         for saved_msg in message_queue:    
             # if msg_num in the queue, we have received this message before
-            if saved_msg[0] == msg_num:
+            if saved_msg == msg_num:
+                # don't ack acks
+                if (msg_type == "ack"):
+                    #msg_processed = True
+                    break
                 # send acknowledgement
                 msg_ack = messages.craftMessage("ack", name, msg_num)
                 connect.connectionSend(msg_ack)  
@@ -385,13 +460,19 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
         if msg_processed:
             message_queue_lock.release()
             continue
+        
+        # we haven't dealt with message before, add to the queue
+        if len(message_queue) == MSG_Q_LEN:
+            message_queue.pop(0)
+        print("adding message to queue")
+        message_queue.append(msg_num)
         message_queue_lock.release()
         
         print("message thread pre processing")
         # handle message
         
         # indicate, new node, and node lost are all for the phone, never for node
-        if (msg_type == "indicating" or msg_type == "new node" or msg_type == "node lost"):
+        if (msg_type == "indicating" or msg_type == "new node" or msg_type == "node lost" or msg_type == "id"):
             # do we have the phone?
             if phone_connection:
                 # send message to the phone
@@ -408,7 +489,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                         continue
                         
                     # send message
-                    connectionSend(msg)
+                    conn.connectionSend(msg)
                     
                     unack_msgs_lock.acquire()
                     unack_msgs[(conn, msg_num, msg)] = 0
@@ -443,7 +524,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                         continue
                     
                     # send message
-                    connectionSend(msg)
+                    conn.connectionSend(msg)
                     
                     unack_msgs_lock.acquire()
                     unack_msgs[(conn, msg_num, msg)] = 0
@@ -474,7 +555,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                     continue
                 
                 # send message
-                connectionSend(msg)
+                conn.connectionSend(msg)
                 
                 unack_msgs_lock.acquire()
                 unack_msgs[(conn, msg_num, msg)] = 0
@@ -490,6 +571,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             # find the message in the unacknowledged messages 
             unack_msgs_lock.acquire()
             for tup in unack_msgs.copy():
+                print(tup[0].name + " " + connect.name + " " + str(tup[1]) + " " + msg_num)
                 if (tup[0].name == connect.name) and (str(tup[1]) == msg_num):
                     print("removing ack from unack_msgs")
                     # message found, remove from dictionary
@@ -500,7 +582,12 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
         # could be for us, we should check
         elif (msg_type == "do indicate"):
             print("handling do indicate")
-            pass
+            
+            if (name == msg_node):
+                print("it's for us")
+                # it's for you
+                #indicator.indicatorStart(False)
+                #indicating = True
             
         # is for us and everyone else
         elif (msg_type == "phone connect"):
@@ -516,10 +603,26 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                     continue
                 
                 # send message
-                connectionSend(msg)
+                conn.connectionSend(msg)
                 
                 unack_msgs_lock.acquire()
                 unack_msgs[(conn, msg_num, msg)] = 0
+                unack_msgs_lock.release()
+            
+            msg_id = messages.craftMessage("id", name)
+            msg_num = int.from_bytes(msg_id[4:], "big")
+            
+            message_queue_lock.acquire()
+            if len(message_queue) == MSG_Q_LEN:
+                message_queue.pop(0)
+            message_queue.append(msg_num)
+            message_queue_lock.release()
+            
+            # send ID message to everyone, eventually the phone
+            for conn in connections:
+                conn.connectionSend(msg_id)
+                unack_msgs_lock.acquire()
+                unack_msgs[(conn, msg_num, msg_id)] = 0
                 unack_msgs_lock.release()
             
             # send ack
@@ -544,7 +647,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                     continue
                 
                 # send message
-                connectionSend(msg)
+                conn.connectionSend(msg)
                 
                 unack_msgs_lock.acquire()
                 unack_msgs[(conn, msg_num, msg)] = 0
@@ -561,7 +664,22 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             
         print("end of message thread loop")
         
+    print("end of message thread")
+        
 
+'''
+phoneListenerThread
+
+Listens for and connects to the mobile phone
+
+Returns:
+    None
+Arguments:
+    threading.Lock() connections_lock : lock acquired when accessing the connections list
+    threading.Lock() reset_lock : lock acquired when accessing the reset flag
+    threading.Lock() unack_msgs_lock : lock acquired when accessing the unacknowledged message dictionary
+    threading.Lock() message_queue_lock : lock acquired when accessing the messages_queue
+'''
 def phoneListenerThread(connections_lock,reset_lock,unack_msgs_lock,message_queue_lock):
 
     global do_phone_discover
@@ -595,39 +713,36 @@ def phoneListenerThread(connections_lock,reset_lock,unack_msgs_lock,message_queu
             print("accepted phone connection; " + str(info[0]))
             phone_addr = info[0]
             #phone_client_sock.settimeout(10)
-            phone_client_sock.setblocking(0)
+            #phone_client_sock.setblocking(0)
         except Exception as e:
             continue
 
-        msg_connection = messages.craftMessage("connection", name)
-        num_exp = int.from_bytes(msg_connection[4:], "big")
-        print(msg_connection)
+        while True:
+            try:
+                msg = phone_client_sock.recv(8)
+                msg_type, msg_node, msg_num, __ = messages.parseMessage(msg)
+                #if (msg_num != num_exp):
+                #    print("number not correct")
+                print("received [%s]" % msg)
+                print(msg_node)
+                break
+            except Exception as e:
+                print(e)
+                #print("oh, I know")
+                continue
+
+        msg_connection = messages.craftMessage("connection", name, num=msg_num)
+
         while True:
             try:
                 phone_client_sock.sendall(msg_connection)
                 break
             except Exception as e:
-                print("ya know")
+                #print("ya know")
                 continue
         
-        phone_client_sock.setblocking(1)
-        
-        while True:
-            try:
-                msg = phone_client_sock.recv(8)
-                msg_type, phone_name, msg_num, __ = messages.parseMessage(msg)
-                #if (msg_num != num_exp):
-                #    print("number not correct")
-                print("received [%s]" % msg)
-                print(phone_name)
-                break;
-            except Exception as e:
-                print(e)
-                #print("oh, I know")
-                continue
-        
-        # initialize phone connection
-        phone_connection = connection.Connection(phone_client_sock, phone_client_sock, phone_addr, phone_server_port, phone_name)
+        # initialize phone connection object
+        phone_connection = connection.Connection(phone_client_sock, phone_client_sock, phone_addr, phone_server_port, "PHONE")
         
         # start phone messages thread
         phone_thread = threading.Thread(target=message_thread, args=(phone_connection,connections_lock,reset_lock,unack_msgs_lock,message_queue_lock,name,))
@@ -636,6 +751,12 @@ def phoneListenerThread(connections_lock,reset_lock,unack_msgs_lock,message_queu
         # craft phone found message
         msg_phone_connect = messages.craftMessage("phone connect", name)
         msg_num = int.from_bytes(msg_phone_connect[4:], "big")
+        
+        message_queue_lock.acquire()
+        if len(message_queue) == MSG_Q_LEN:
+            message_queue.pop(0)
+        message_queue.append(msg_num)
+        message_queue_lock.release()
         
         # tell the whole world that we are connected to the phone
         for conn in connections.copy():
@@ -646,11 +767,8 @@ def phoneListenerThread(connections_lock,reset_lock,unack_msgs_lock,message_queu
         
         do_phone_discover = False
         
-        #phone_server_sock.settimeout(None)
-        #phone_client_sock.settimeout(None)
         phone_server_sock.setblocking(1)
         phone_client_sock.setblocking(1)
-        
     
     print("closing phone listener thread")
 

@@ -28,6 +28,7 @@ DO_INDICATE = 0x6
 PHONE_CONNECT = 0x7
 PHONE_LOST = 0x8
 CONNECTION = 0x9
+ID = 0xA
 
 '''
 parseMessage
@@ -62,6 +63,10 @@ def parseMessage(msg):
         parsed_msg0 = "phone lost"
     elif (msg_type == CONNECTION):
         parsed_msg0 = "connection"
+    elif (msg_type == ID):
+        parsed_msg0 = "id"
+    else:
+        print("could not understand message type")
     
     # get the msg_node that is present for all messages
     msg_node_full = int.from_bytes(msg[1:4], "big")
@@ -120,6 +125,8 @@ def craftMessage(msg_type, name, num=None, name2=None):
         msg_int = msg_int | (PHONE_LOST << 56)
     elif (msg_type == "connection"):
         msg_int = msg_int | (CONNECTION << 56)
+    elif (msg_type == "id"):
+        msg_int = msg_int | (ID << 56)
     else:
         print("Error: craftMessage cannot understand message type")
     
