@@ -24,6 +24,13 @@ def enableBluetooth():
     code = os.system("hciconfig hci0 up piscan 2>/dev/null")
     return code
 
+'''
+
+'''
+def enablePairing():
+    code = os.system("bluetoothctl <<EOF default-agent\nagent on\nagent NoInputNoOutput\ndiscoverable on\npairable on\nexit\nEOF"
+    return code
+
 
 '''
 getBDaddr 
@@ -94,8 +101,9 @@ establishServerSock
 Creates the socket this node will accept connections on 
 
 Returns:
-
+    bluetooth.BluetoothSocket server_socket : bluetooth socket on this node that we listen for connections with
 Arguments:
+    int server_port : port on this device that we will bind our server socket to
 
 '''
 def establishServerSock(server_port):
@@ -112,8 +120,14 @@ establishConnection
 Establish a connection with an address, as well as the reverse connection 
 
 Returns:
-
+    bluetooth.BluetoothSocket recv_sock, : bluetooth socket on other node that we are receiving messages from for this connection on
+    bluetooth.BluetoothSocket send_sock, : bluetooth socket on this node that we are sending messages from for this connection on 
+    string address[0] : MAC address of the node we are connecting to
+    string address[1] : port of the other node's server socket
 Arguments:
+    string address : MAC address of the node we are connecting to
+    bluetooth.bluetoothSocket server_sock : socket on this node that we listen for connections with
+    string name : name of this node
 
 '''
 def establishConnection(address, server_sock, name):
@@ -123,8 +137,7 @@ def establishConnection(address, server_sock, name):
     
     # server port on other node -- this is standard
     port = 0x1001
-    
-    print(address, port)
+        
     # connect to other node 
     send_sock.connect((address, port))
     
@@ -136,14 +149,8 @@ def establishConnection(address, server_sock, name):
     
     # receive acknowledgement
     ack = recv_sock.recv(8)
-    print("received [%s]" % ack)
     
-    if ((int.from_bytes(ack, "big") & 0xFF00000000000000) >> 56):
-        phone_found = True
-    else:
-        phone_found = False
-    
-    return (recv_sock, send_sock, address[0], address[1], phone_found)
+    return (recv_sock, send_sock, address[0], address[1])
 
 
 
