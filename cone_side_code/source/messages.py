@@ -29,6 +29,7 @@ PHONE_CONNECT = 0x7
 PHONE_LOST = 0x8
 CONNECTION = 0x9
 ID = 0xA
+DISCONNECT = 0xB
 
 '''
 parseMessage
@@ -65,6 +66,8 @@ def parseMessage(msg):
         parsed_msg0 = "connection"
     elif (msg_type == ID):
         parsed_msg0 = "id"
+    elif (msg_type == DISCONNECT):
+        parsed_msg0 = "disconnect"
     else:
         print("could not understand message type")
     
@@ -127,6 +130,8 @@ def craftMessage(msg_type, name, num=None, name2=None):
         msg_int = msg_int | (CONNECTION << 56)
     elif (msg_type == "id"):
         msg_int = msg_int | (ID << 56)
+    elif (msg_type == "disconnect")
+        msg_int = msg_int | (DISCONNECT << 56)
     else:
         print("Error: craftMessage cannot understand message type")
     

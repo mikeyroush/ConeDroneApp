@@ -10,6 +10,7 @@ import utils
 import connection
 import threading
 import time
+import os
 import sys
 import messages
 import sensor
@@ -462,6 +463,17 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             # close the connection
             connect.connectionClose()
             
+            # remove all messages from the removed connection in unack_msgs
+            unack_msgs_lock.acquire()
+            for tup in unack_msgs.copy():
+                if tup[0] == connect:
+                    try:
+                        unack_msgs.pop(tup)
+                    except KeyError as e:
+                        print(e)
+                        print("unack message already removed")
+            unack_msgs_lock.release()
+            
             # if this is not the phone connection
             if connect.name != "PHONE":
                 # craft the node lost message
@@ -474,17 +486,6 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                     message_queue.pop(0)
                 message_queue.append(msg_num)
                 message_queue_lock.release()
-                
-                # remove all messages from the removed connection in unack_msgs
-                unack_msgs_lock.acquire()
-                for tup in unack_msgs.copy():
-                    if tup[0] == connect:
-                        try:
-                            unack_msgs.pop(tup)
-                        except KeyError as e:
-                            print(e)
-                            print("unack message already removed")
-                unack_msgs_lock.release()
                 
                 # remove connection from connections
                 connections_lock.acquire()
@@ -790,6 +791,32 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                 unack_msgs[(conn, msg_num, msg)] = 0
                 unack_msgs_lock.release()
             
+            # send ack
+            msg_ack = messages.craftMessage("ack", name, msg_num)
+            connect.connectionSend(msg_ack)
+            
+        elif (msg_type == "disconnect"):
+            # check if we are to disconnect
+            if (name == msg_node):
+                # it's for you
+                if indicating:
+                    indicator.indicatorStop()
+                os.system("shutdown -h now")
+            
+            else:
+                # pass it on
+                for conn in connections.copy():
+                    # do not send message back to whomst've sent it 
+                    if conn == connect:
+                        continue
+                    
+                    # send message
+                    conn.connectionSend(msg)
+                    
+                    unack_msgs_lock.acquire()
+                    unack_msgs[(conn, msg_num, msg)] = 0
+                    unack_msgs_lock.release()
+                    
             # send ack
             msg_ack = messages.craftMessage("ack", name, msg_num)
             connect.connectionSend(msg_ack)
