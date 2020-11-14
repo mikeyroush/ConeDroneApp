@@ -1,9 +1,11 @@
 import 'dart:async';
-import 'package:cone_drone/components/rounded_botton.dart';
-import 'package:cone_drone/services/form_validator.dart';
+import 'package:cone_drone/services/bluetooth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:scoped_model/scoped_model.dart';
+import 'package:cone_drone/components/rounded_botton.dart';
+import 'package:cone_drone/services/form_validator.dart';
 import 'package:cone_drone/screens/flight/pilot_dropdown.dart';
 import 'package:cone_drone/services/auth.dart';
 import 'package:cone_drone/services/database.dart';
@@ -53,151 +55,185 @@ class _FlightScreenState extends State<FlightScreen> {
     final user = Provider.of<MyUser>(context);
     screenOrientation = MediaQuery.of(context).orientation;
 
-    return StreamProvider.value(
-      value: DatabaseService(instructorID: user.uid).pilots,
-      catchError: (_, __) => null,
-      child: Expanded(
-        child: Column(
-          children: [
-            Expanded(
-              flex: (screenOrientation == Orientation.portrait) ? 3 : 1,
-              child: Container(
-                padding: const EdgeInsets.all(16.0),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.blueGrey,
-                  borderRadius: BorderRadius.circular(30.0),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          timeElapsed,
-                          style:
-                              kTimerTextStyle.copyWith(color: Colors.white70),
-                        ),
-                      ),
+    return ScopedModelDescendant<BluetoothManager>(
+      builder: (_, child, model) {
+        return StreamProvider.value(
+          value: DatabaseService(instructorID: user.uid).pilots,
+          catchError: (_, __) => null,
+          child: Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  flex: (screenOrientation == Orientation.portrait) ? 3 : 1,
+                  child: Container(
+                    padding: const EdgeInsets.all(16.0),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.blueGrey,
+                      borderRadius: BorderRadius.circular(30.0),
                     ),
-                    // SizedBox(height: 8.0),
-                    Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: RoundedButton(
-                              title: 'Start',
-                              backgroundColor: Colors.lightBlueAccent,
-                              onPress: () {
-                                _stopwatch.start();
-                                updateStopwatch();
-                              },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              timeElapsed,
+                              style: kTimerTextStyle.copyWith(
+                                  color: Colors.white70),
                             ),
                           ),
-                          SizedBox(width: 8.0),
-                          Flexible(
-                            child: RoundedButton(
-                              title: _stopwatch.isRunning ? 'Stop' : 'Reset',
-                              backgroundColor: Colors.redAccent,
-                              onPress: () {
-                                _stopwatch.isRunning
-                                    ? setState(() => _stopwatch.stop())
-                                    : setState(() {
+                        ),
+                        // SizedBox(height: 8.0),
+                        Expanded(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: RoundedButton(
+                                  title: 'Start',
+                                  backgroundColor: Colors.lightBlueAccent,
+                                  onPress: () {
+                                    _stopwatch.start();
+                                    updateStopwatch();
+                                  },
+                                ),
+                              ),
+                              SizedBox(width: 8.0),
+                              Flexible(
+                                child: RoundedButton(
+                                  title:
+                                      _stopwatch.isRunning ? 'Stop' : 'Reset',
+                                  backgroundColor: Colors.redAccent,
+                                  onPress: () {
+                                    _stopwatch.isRunning
+                                        ? setState(() => _stopwatch.stop())
+                                        : setState(() {
+                                            _stopwatch.reset();
+                                            timeElapsed = "00:00.0";
+                                          });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16.0),
+                Expanded(
+                  flex: (screenOrientation == Orientation.portrait) ? 5 : 1,
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white70,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30.0),
+                        topRight: Radius.circular(30.0),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: ListView(
+                        children: [
+                          Form(
+                            key: _formKey,
+                            child: Column(
+                              children: [
+                                PilotDropdown(updatePilot: updatePilot),
+                                SizedBox(height: 8.0),
+                                // total cones
+                                TextFormField(
+                                  readOnly: model.isConnected,
+                                  initialValue: model.mapCones.values
+                                      .where((x) => x != ConeState.disconnected)
+                                      .length
+                                      .toString(),
+                                  style: kTextBold,
+                                  decoration: kTextFieldDecoration.copyWith(
+                                    hintText: 'Enter a value',
+                                    hintStyle: TextStyle(color: Colors.black54),
+                                    prefix: Text(
+                                      'Total Cones: ',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.normal),
+                                    ),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    FilteringTextInputFormatter
+                                        .singleLineFormatter
+                                  ],
+                                  onChanged: (val) => setState(
+                                      () => _conesTotal = int.parse(val)),
+                                  validator: FormValidator.validateInteger,
+                                ),
+                                SizedBox(height: 8.0),
+                                // activated cones
+                                TextFormField(
+                                  readOnly: model.isConnected,
+                                  initialValue: model.mapCones.values
+                                      .where((x) => x == ConeState.indicating)
+                                      .length
+                                      .toString(),
+                                  style: kTextBold,
+                                  decoration: kTextFieldDecoration.copyWith(
+                                    hintText: 'Enter a value',
+                                    hintStyle: TextStyle(color: Colors.black54),
+                                    prefix: Text(
+                                      'Activated Cones: ',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.normal,
+                                      ),
+                                    ),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    FilteringTextInputFormatter
+                                        .singleLineFormatter
+                                  ],
+                                  onChanged: (val) => setState(
+                                      () => _conesActivated = int.parse(val)),
+                                  validator: FormValidator.validateInteger,
+                                ),
+                                RoundedButton(
+                                  title: 'Submit',
+                                  backgroundColor: Colors.blueAccent,
+                                  onPress: () async {
+                                    if (_formKey.currentState.validate() &&
+                                        !_stopwatch.isRunning) {
+                                      // send data
+                                      await DatabaseService().addFlight(
+                                          _currentPilotID,
+                                          _conesTotal,
+                                          _conesActivated,
+                                          _stopwatch.elapsedMilliseconds);
+                                      // reset form and stopwatch
+                                      _formKey.currentState.reset();
+                                      setState(() {
                                         _stopwatch.reset();
                                         timeElapsed = "00:00.0";
                                       });
-                              },
+                                    }
+                                  },
+                                )
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    )
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 16.0),
-            Expanded(
-              flex: (screenOrientation == Orientation.portrait) ? 5 : 1,
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white70,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30.0),
-                    topRight: Radius.circular(30.0),
+                    ),
                   ),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: ListView(
-                    children: [
-                      Form(
-                        key: _formKey,
-                        child: Column(
-                          children: [
-                            PilotDropdown(updatePilot: updatePilot),
-                            SizedBox(height: 8.0),
-                            TextFormField(
-                              decoration: kTextFieldDecoration.copyWith(
-                                  hintText: 'Total number of cones',
-                                  hintStyle: TextStyle(color: Colors.black54)),
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                FilteringTextInputFormatter.singleLineFormatter
-                              ],
-                              onChanged: (val) =>
-                                  setState(() => _conesTotal = int.parse(val)),
-                              validator: FormValidator.validateInteger,
-                            ),
-                            SizedBox(height: 8.0),
-                            TextFormField(
-                              decoration: kTextFieldDecoration.copyWith(
-                                  hintText: 'Number of activated cones',
-                                  hintStyle: TextStyle(color: Colors.black54)),
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                FilteringTextInputFormatter.singleLineFormatter
-                              ],
-                              onChanged: (val) => setState(
-                                  () => _conesActivated = int.parse(val)),
-                              validator: FormValidator.validateInteger,
-                            ),
-                            RoundedButton(
-                              title: 'Submit',
-                              backgroundColor: Colors.blueAccent,
-                              onPress: () async {
-                                if (_formKey.currentState.validate() &&
-                                    !_stopwatch.isRunning) {
-                                  // send data
-                                  await DatabaseService().addFlight(
-                                      _currentPilotID,
-                                      _conesTotal,
-                                      _conesActivated,
-                                      _stopwatch.elapsedMilliseconds);
-                                  // reset form and stopwatch
-                                  _formKey.currentState.reset();
-                                  setState(() {
-                                    _stopwatch.reset();
-                                    timeElapsed = "00:00.0";
-                                  });
-                                }
-                              },
-                            )
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

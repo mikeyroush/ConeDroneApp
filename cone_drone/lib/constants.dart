@@ -28,6 +28,11 @@ const kMenuTextStyle = TextStyle(
   color: Colors.white70,
 );
 
+const kTextBold = TextStyle(
+  color: Colors.black54,
+  fontWeight: FontWeight.w900,
+);
+
 const kTextFieldStyle = TextStyle(color: Colors.white70);
 
 const kTextErrorStyle = TextStyle(color: Colors.redAccent);

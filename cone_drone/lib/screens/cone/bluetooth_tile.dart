@@ -21,7 +21,7 @@ class BluetoothDeviceTile extends StatelessWidget {
               margin: EdgeInsets.fromLTRB(20.0, 6.0, 20.0, 0.0),
               child: ListTile(
                 leading: Icon(Icons.bluetooth, color: Colors.black54),
-                title: Text('${device.name ?? 'No Name'}'),
+                title: Text('${device.name.toUpperCase() ?? 'No Name'}'),
                 subtitle: Text('${device.address}'),
               ),
             ),

@@ -4,7 +4,7 @@ import 'package:scoped_model/scoped_model.dart';
 import 'dart:typed_data';
 import 'package:cone_drone/services/messages.dart';
 
-enum ConeState { connected, disconnected }
+enum ConeState { connected, disconnected, indicating }
 
 class BluetoothManager extends Model {
   // class variables
@@ -16,6 +16,7 @@ class BluetoothManager extends Model {
   BluetoothDevice _host;
   BluetoothConnection _connection;
   Map<String, ConeState> mapCones = new Map<String, ConeState>();
+  bool _showDevices = true;
 
   // add vars for total, activated, errors
 
@@ -46,6 +47,27 @@ class BluetoothManager extends Model {
   //       .toList();
   // }
 
+  // return connection status
+  bool get isConnected {
+    return _connection != null && _connection.isConnected;
+  }
+
+  // return show device status
+  bool get showDevices {
+    return _showDevices;
+  }
+
+  // toggle show device status
+  void toggleShowDevices() {
+    _showDevices = !_showDevices;
+    notifyListeners();
+  }
+
+  // return host's name
+  String get hostName {
+    return _host != null ? _host.name : 'None';
+  }
+
   Future<List<BluetoothDiscoveryResult>> get discoveryResults {
     return _bluetooth.startDiscovery().toList();
   }
@@ -69,12 +91,20 @@ class BluetoothManager extends Model {
 
   // connect to a device and send initial message
   void connectDevice(BluetoothDevice device) async {
-    // todo: disconnect from device if it already exists
+    // disconnect current device
+    if (_connection != null &&
+        _connection.isConnected &&
+        _host.name != device.name) {
+      await _connection.finish();
+      mapCones.clear();
+    }
+
     try {
       // establish connection
       _connection = await BluetoothConnection.toAddress(device.address);
       _host = device;
       mapCones[_host.name] = ConeState.connected;
+      _showDevices = false;
 
       // send connection message to network
       Uint8List msg =
@@ -88,15 +118,6 @@ class BluetoothManager extends Model {
     } catch (e) {
       print('Cannot connect, exception occurred');
     }
-  }
-
-  // return connection status
-  bool get isConnected {
-    return _connection != null && _connection.isConnected;
-  }
-
-  String get hostName {
-    return _host != null ? _host.name : 'Not Connected';
   }
 
   // listen for network messages
@@ -113,6 +134,7 @@ class BluetoothManager extends Model {
           {
             out = Uint8List.fromList(
                 craftMessage("ack", _host.name, num: msg[2]));
+            mapCones[msg[1]] = ConeState.indicating;
             break;
           }
         case "new node":
@@ -120,10 +142,26 @@ class BluetoothManager extends Model {
             out = Uint8List.fromList(
                 craftMessage("ack", _host.name, num: msg[2]));
             mapCones[msg[3]] = ConeState.connected;
-            notifyListeners();
+            break;
+          }
+        case "id":
+          {
+            out = Uint8List.fromList(
+                craftMessage("ack", _host.name, num: msg[2]));
+            mapCones[msg[1]] = ConeState.connected;
+            break;
+          }
+        case "node lost":
+          {
+            out = Uint8List.fromList(
+                craftMessage("ack", _host.name, num: msg[2]));
+            mapCones[msg[3]] = ConeState.disconnected;
             break;
           }
       }
+
+      // update listeners
+      notifyListeners();
 
       // send acknowledgement
       if (out != null) {
@@ -133,16 +171,46 @@ class BluetoothManager extends Model {
     }).onDone(() {
       print('Disconnected by remote request');
       _host = null;
+      _showDevices = true;
       mapCones.clear();
       notifyListeners();
     });
   }
 
-  // send reset message to network
-  void sendReset() {
+  // send reset all message to network
+  void sendResetAll() {
     Uint8List resetMsg =
         Uint8List.fromList(craftMessage("reset all", _host.name));
     print('Sending reset all...');
     _connection.output.add(resetMsg);
+
+    // update cone map
+    mapCones.forEach((key, value) {
+      if (value == ConeState.indicating) mapCones[key] = ConeState.connected;
+    });
+    notifyListeners();
+  }
+
+  // send reset cone message
+  void sendReset(String name) {
+    Uint8List resetMsg = Uint8List.fromList(craftMessage("reset", name));
+    print('Sending reset to $name...');
+    _connection.output.add(resetMsg);
+
+    // update cone map
+    mapCones[name] = ConeState.connected;
+    notifyListeners();
+  }
+
+  // send do indicate message
+  void sendDoIndicate(String name) {
+    Uint8List indicateMsg =
+        Uint8List.fromList(craftMessage("do indicate", name));
+    print('Sending do inidcate to $name...');
+    _connection.output.add(indicateMsg);
+
+    // update cone map
+    mapCones[name] = ConeState.indicating;
+    notifyListeners();
   }
 }

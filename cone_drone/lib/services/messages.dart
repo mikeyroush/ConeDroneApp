@@ -105,6 +105,12 @@ List parseMessage(Uint8List msg) {
         msg_type = "connection";
         break;
       }
+    case 10:
+      {
+        // preexisting node message
+        msg_type = "id";
+        break;
+      }
     default:
       {
         print("idk man");

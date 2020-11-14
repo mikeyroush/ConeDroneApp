@@ -16,6 +16,7 @@ class HomeLayout extends StatefulWidget {
 class _HomeLayoutState extends State<HomeLayout>
     with SingleTickerProviderStateMixin {
   final AuthService _auth = AuthService();
+  final BluetoothManager _bluetoothManager = BluetoothManager();
   AnimationController _controller;
   Animation _scaleAnimation;
   Animation _slideAnimation;
@@ -54,7 +55,7 @@ class _HomeLayoutState extends State<HomeLayout>
     return Scaffold(
       backgroundColor: Colors.blueGrey.shade700,
       body: ScopedModel(
-        model: BluetoothManager(),
+        model: _bluetoothManager,
         child: Stack(
           fit: StackFit.expand,
           children: [

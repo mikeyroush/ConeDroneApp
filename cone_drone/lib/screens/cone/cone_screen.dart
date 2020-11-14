@@ -13,8 +13,6 @@ class ConeScreen extends StatefulWidget {
 }
 
 class _ConeScreenState extends State<ConeScreen> {
-  bool _showDevices = false;
-
   @override
   Widget build(BuildContext context) {
     return ScopedModelDescendant<BluetoothManager>(
@@ -25,21 +23,19 @@ class _ConeScreenState extends State<ConeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (!model.isConnected)
-                  FlatButton.icon(
-                    onPressed: () =>
-                        setState(() => _showDevices = !_showDevices),
-                    icon: Icon(
-                      Icons.bluetooth,
-                      color: Colors.white70,
-                    ),
-                    label: Text(
-                      _showDevices ? 'Hide Devices' : 'Show Devices',
-                      style: kTextFieldStyle,
-                    ),
-                    color: Colors.blueGrey.shade800,
+                FlatButton.icon(
+                  onPressed: () => setState(() => model.toggleShowDevices()),
+                  icon: Icon(
+                    Icons.bluetooth,
+                    color: Colors.white70,
                   ),
-                if (_showDevices && !model.isConnected)
+                  label: Text(
+                    model.showDevices ? 'Hide Devices' : 'Show Devices',
+                    style: kTextFieldStyle,
+                  ),
+                  color: Colors.blueGrey.shade800,
+                ),
+                if (model.showDevices)
                   Expanded(
                     flex: 2,
                     child: Container(
@@ -47,8 +43,21 @@ class _ConeScreenState extends State<ConeScreen> {
                           color: Colors.blueGrey,
                           borderRadius: BorderRadius.circular(10.0),
                         ),
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: BluetoothList()),
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Column(
+                          children: [
+                            Align(
+                              alignment: Alignment.center,
+                              child: Text(
+                                model.isConnected
+                                    ? 'Select new host:'
+                                    : 'Select a host:',
+                                style: kMenuTextStyle,
+                              ),
+                            ),
+                            Expanded(child: BluetoothList()),
+                          ],
+                        )),
                   ),
                 Expanded(
                   flex: 3,
@@ -69,7 +78,7 @@ class _ConeScreenState extends State<ConeScreen> {
                         Align(
                           alignment: Alignment.center,
                           child: Text(
-                            "Host: ${model.hostName}",
+                            "Host: ${model.hostName.toUpperCase()}",
                             style: kMenuTextStyle.copyWith(
                                 color: model.isConnected
                                     ? Colors.green.shade900
@@ -79,7 +88,7 @@ class _ConeScreenState extends State<ConeScreen> {
                         Expanded(child: ConeList()),
                         if (model.isConnected)
                           FlatButton.icon(
-                            onPressed: () => model.sendReset(),
+                            onPressed: () => model.sendResetAll(),
                             icon: Icon(
                               Icons.refresh,
                               color: Colors.white70,
