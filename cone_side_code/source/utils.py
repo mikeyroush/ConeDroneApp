@@ -28,7 +28,7 @@ def enableBluetooth():
 
 '''
 def enablePairing():
-    code = os.system("bluetoothctl <<EOF default-agent\nagent on\nagent NoInputNoOutput\ndiscoverable on\npairable on\nexit\nEOF"
+    code = os.system("bluetoothctl <<EOF\ndefault-agent\nagent on\nagent NoInputNoOutput\ndiscoverable on\npairable on\nexit\nEOF")
     return code
 
 

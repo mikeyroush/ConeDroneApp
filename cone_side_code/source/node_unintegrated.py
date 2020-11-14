@@ -147,7 +147,7 @@ def main():
                     unack_msgs.pop(tup)
                 except KeyError as e:
                     print(e)
-                    print(unack message already removed)
+                    print("unack message already removed")
                 unack_msgs_lock.release()
                 
                 # remove all messages from the removed connection in unack_msgs
@@ -158,7 +158,7 @@ def main():
                             unack_msgs.pop(tup2)
                         except KeyError as e:
                             print(e)
-                            print(unack message already removed)
+                            print("unack message already removed")
                         unack_msgs_lock.release()
                     
                 # tell the phone that this connection doesn't exist any longer
@@ -405,7 +405,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                             unack_msgs.pop(tup)
                         except KeyError as e:
                             print(e)
-                            print(unack message already removed)
+                            print("unack message already removed")
                 unack_msgs_lock.release()
                 
                 # remove connection from connections
@@ -589,7 +589,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
                         unack_msgs.pop(tup)
                     except KeyError as e:
                         print(e)
-                        print(unack message already removed)
+                        print("unack message already removed")
                     break
             unack_msgs_lock.release()
             
