@@ -21,14 +21,14 @@ Arguments:
     None
 '''
 def enableBluetooth():
-    code = os.system("hciconfig hci0 up piscan 2>/dev/null")
+    code = os.system("hciconfig hci0 up piscan sspmode 1 2>/dev/null")
     return code
 
 '''
 
 '''
 def enablePairing():
-    code = os.system("bluetoothctl <<EOF\ndefault-agent\nagent on\nagent NoInputNoOutput\ndiscoverable on\npairable on\nexit\nEOF")
+    code = os.system("bluetoothctl <<EOF\ndiscoverable on\npairable on\nagent NoInputNoOutput\ndefault-agent\nEOF")
     return code
 
 
