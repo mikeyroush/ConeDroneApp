@@ -157,16 +157,22 @@ class _HomeLayoutState extends State<HomeLayout>
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       InkWell(
-                        child: isCollapsed
-                            ? Icon(Icons.arrow_back_ios, color: Colors.white70)
-                            : Icon(Icons.menu, color: Colors.white70),
+                        child: SizedBox(
+                          width: 30.0,
+                          height: 30.0,
+                          child: isCollapsed
+                              ? Icon(Icons.arrow_back_ios,
+                                  color: Colors.white70)
+                              : Icon(Icons.menu, color: Colors.white70),
+                        ),
                         onTap: () {
                           setState(() {
                             toggleMenu();
                           });
                         },
                       ),
-                      Text('Cone Drone', style: kTextFieldStyle),
+                      Text('Cone Drone',
+                          style: kTextFieldStyle.copyWith(fontSize: 18.0)),
                       SizedBox(),
                     ],
                   ),

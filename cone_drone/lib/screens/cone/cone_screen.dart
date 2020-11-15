@@ -87,17 +87,47 @@ class _ConeScreenState extends State<ConeScreen> {
                         ),
                         Expanded(child: ConeList()),
                         if (model.isConnected)
-                          FlatButton.icon(
-                            onPressed: () => model.sendResetAll(),
-                            icon: Icon(
-                              Icons.refresh,
-                              color: Colors.white70,
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // reset all button
+                                FlatButton.icon(
+                                  onPressed: () => model.sendResetAll(),
+                                  icon: Icon(
+                                    Icons.refresh,
+                                    color: Colors.white70,
+                                  ),
+                                  label: Text(
+                                    'Reset Network',
+                                    style: kTextFieldStyle,
+                                  ),
+                                  color: Colors.blueAccent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(5.0),
+                                  ),
+                                ),
+                                // power off network button
+                                FlatButton.icon(
+                                  onPressed: () => model.sendDisconnectAll(),
+                                  icon: Icon(
+                                    Icons.power_settings_new,
+                                    color: Colors.white70,
+                                  ),
+                                  label: Text(
+                                    'Power Off Network',
+                                    style: kTextFieldStyle,
+                                  ),
+                                  color: Colors.redAccent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(5.0),
+                                  ),
+                                ),
+                              ],
                             ),
-                            label: Text(
-                              'Reset Network',
-                              style: kTextFieldStyle,
-                            ),
-                            color: Colors.blueAccent,
                           ),
                       ],
                     ),

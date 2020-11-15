@@ -193,6 +193,16 @@ Uint8List craftMessage(type, name, {num: -1, name2: "dronecone???"}) {
         msg_int = msg_int | 0x0900000000000000;
         break;
       }
+    case "disconnect":
+      {
+        msg_int = msg_int | 0x0B00000000000000;
+        break;
+      }
+    case "disconnect all":
+      {
+        msg_int = msg_int | 0x0C00000000000000;
+        break;
+      }
   }
 
   if (name2 != "dronecone???") {

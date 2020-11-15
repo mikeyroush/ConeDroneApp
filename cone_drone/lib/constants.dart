@@ -33,9 +33,16 @@ const kTextBold = TextStyle(
   fontWeight: FontWeight.w900,
 );
 
-const kTextFieldStyle = TextStyle(color: Colors.white70);
+const kTextFieldStyle =
+    TextStyle(color: Colors.white70, fontWeight: FontWeight.normal);
 
-const kTextErrorStyle = TextStyle(color: Colors.redAccent);
+const kTextFieldDarkStyle =
+    TextStyle(color: Colors.black54, fontWeight: FontWeight.normal);
+
+const kTextErrorStyle = TextStyle(
+  color: Colors.redAccent,
+  fontWeight: FontWeight.normal,
+);
 
 const kTextFieldDecoration = InputDecoration(
   hintText: 'Enter a value',
