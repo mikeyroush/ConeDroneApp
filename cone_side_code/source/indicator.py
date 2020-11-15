@@ -60,12 +60,20 @@ def indicatorThread(startup, lock):
     
 
 def indicatorStart(startup):
+    if (not indicate_lock.locked()):
+        print("already indicating")
+        return
+
     indicate_lock.release()
     inner_thread = threading.Thread(target=indicatorThread, args=(startup, indicate_lock))
     inner_thread.start()
     
 #stop the inner_thread loop, lower the flag, and clear the LEDs. 
 def indicatorStop():
+    if (indicate_lock.locked()):
+        print("already not indicating")
+        return
+
     indicate_lock.acquire()
     p = GPIO.PWM(SERVO_PWM, 50)
     p.start(12) #12% duty cycle, go back to 180 degrees. 
