@@ -6,9 +6,9 @@ from smbus2 import SMBus #using smbus2 by Karl-Petter Lindegaard (I2C messaging)
 import time
 import RPi.GPIO as GPIO
 import schedule
+GPIO.setwarnings(False)
 
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(12, GPIO.OUT)
+GPIO.setmode(GPIO.BCM)
 p = GPIO.PWM(12, 50)
 p.start(7) #2 to 12
 time.sleep(1)
