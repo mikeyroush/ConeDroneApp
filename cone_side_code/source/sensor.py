@@ -28,7 +28,7 @@ with SMBus(1) as bus:
     bus.write_byte_data(0x10, 0x28, 0x00) #disable low power mode
     
     # please work
-    bus.write_byte_data(0x10, 0x2A, 0x16) #set minimum amplitude to 25 (default is 100)
+    bus.write_byte_data(0x10, 0x2A, 0x64) #set minimum amplitude to 25 (default is 100)
     # i beg of you
     
     #minimum amplitude, and minimum/maximum distances work just fine with the default values (100, and .2m and 8m respectively).
@@ -64,6 +64,7 @@ def interpretDistance(distance):
 
 #noise filtering try 1
 def interpretDistance(distance):
+    global last_triggered
     if (last_triggered and distance > MIN_DISTANCE and distance < MAX_DISTANCE):
         return True
     last_triggered = (distance > MIN_DISTANCE and distance < MAX_DISTANCE)
