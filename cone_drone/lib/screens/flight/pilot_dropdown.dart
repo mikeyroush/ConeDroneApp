@@ -6,7 +6,8 @@ import 'package:cone_drone/constants.dart';
 
 class PilotDropdown extends StatefulWidget {
   final Function updatePilot;
-  PilotDropdown({this.updatePilot});
+  final String pilotID;
+  PilotDropdown({this.updatePilot, this.pilotID});
 
   @override
   _PilotDropdownState createState() => _PilotDropdownState();
@@ -26,6 +27,7 @@ class _PilotDropdownState extends State<PilotDropdown> {
           child: Text(pilot.name),
         );
       }).toList(),
+      value: widget.pilotID,
       validator: FormValidator.validateDropdown,
       onChanged: widget.updatePilot,
     );

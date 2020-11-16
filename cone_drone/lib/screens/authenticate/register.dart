@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cone_drone/components/rounded_botton.dart';
+import 'package:cone_drone/components/rounded_button.dart';
 import 'package:cone_drone/screens/loading_screen.dart';
 import 'package:cone_drone/models/user.dart';
 import 'package:cone_drone/services/auth.dart';

@@ -4,6 +4,7 @@ import 'package:cone_drone/screens/settings_form.dart';
 import 'package:cone_drone/screens/cone/cone_screen.dart';
 import 'package:cone_drone/screens/pilots/pilot_screen.dart';
 import 'package:cone_drone/screens/flight/flight_screen.dart';
+import 'package:cone_drone/screens/disable_bluetooth.dart';
 import 'package:cone_drone/services/auth.dart';
 import 'package:cone_drone/services/bluetooth.dart';
 import 'package:cone_drone/constants.dart';
@@ -61,6 +62,7 @@ class _HomeLayoutState extends State<HomeLayout>
           children: [
             menu(context),
             screen(context),
+            DisabledBluetooth(),
           ],
         ),
       ),

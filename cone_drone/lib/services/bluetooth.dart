@@ -20,6 +20,7 @@ class BluetoothManager extends Model {
   int numConnected = 0;
   int numActivated = 0;
   bool _showDevices = true;
+  bool connecting = false;
 
   // add vars for total, activated, errors
 
@@ -52,6 +53,7 @@ class BluetoothManager extends Model {
 
   // return connection status
 
+  // return connection status
   bool get isConnected {
     return _connection != null && _connection.isConnected;
   }
@@ -72,10 +74,20 @@ class BluetoothManager extends Model {
     return _host != null ? _host.name : 'None';
   }
 
+  Stream<BluetoothState> get bluetoothStateChange {
+    return _bluetooth.onStateChanged();
+  }
+
+  Future<BluetoothState> get bluetoothState async {
+    return await _bluetooth.state;
+  }
+
+  // get discoverable devices
   Future<List<BluetoothDiscoveryResult>> get discoveryResults {
     return _bluetooth.startDiscovery().toList();
   }
 
+  // find pis in discoverable device list
   Future<List<BluetoothDiscoveryResult>> findPis() async {
     Timer(Duration(seconds: 15), _bluetooth.cancelDiscovery);
     List<BluetoothDiscoveryResult> deviceResults = await discoveryResults;
@@ -85,6 +97,7 @@ class BluetoothManager extends Model {
         .toList();
   }
 
+  // get paired pi list
   Future<List<BluetoothDevice>> getPairedPis() async {
     List<BluetoothDevice> pairedDevices = await _bluetooth.getBondedDevices();
     return pairedDevices
@@ -105,10 +118,16 @@ class BluetoothManager extends Model {
 
     try {
       // establish connection
+      connecting = true;
+      notifyListeners();
       _connection = await BluetoothConnection.toAddress(device.address);
       _host = device;
+
+      // update map and other vars
       mapCones[_host.name] = ConeState.connected;
+      _updateConeCount();
       _showDevices = false;
+      connecting = false;
 
       // send connection message to network
       Uint8List msg =
@@ -120,8 +139,17 @@ class BluetoothManager extends Model {
       notifyListeners();
       networkMessages;
     } catch (e) {
+      connecting = false;
       print('Cannot connect, exception occurred');
     }
+  }
+
+  void _updateConeCount() {
+    numConnected =
+        mapCones.values.where((x) => x != ConeState.disconnected).length;
+    numActivated =
+        mapCones.values.where((x) => x == ConeState.indicating).length;
+    notifyListeners();
   }
 
   // listen to network
@@ -144,7 +172,6 @@ class BluetoothManager extends Model {
             out = Uint8List.fromList(
                 craftMessage("ack", _host.name, num: msg[2]));
             mapCones[msg[1]] = ConeState.indicating;
-            numActivated++;
             break;
           }
         case "new node":
@@ -152,7 +179,6 @@ class BluetoothManager extends Model {
             out = Uint8List.fromList(
                 craftMessage("ack", _host.name, num: msg[2]));
             mapCones[msg[3]] = ConeState.connected;
-            numConnected++;
             break;
           }
         case "id":
@@ -160,7 +186,6 @@ class BluetoothManager extends Model {
             out = Uint8List.fromList(
                 craftMessage("ack", _host.name, num: msg[2]));
             mapCones[msg[1]] = ConeState.connected;
-            numConnected++;
             break;
           }
         case "node lost":
@@ -168,13 +193,12 @@ class BluetoothManager extends Model {
             out = Uint8List.fromList(
                 craftMessage("ack", _host.name, num: msg[2]));
             mapCones[msg[3]] = ConeState.disconnected;
-            numConnected--;
             break;
           }
       }
 
-      // update listeners
-      notifyListeners();
+      // update cone count
+      _updateConeCount();
 
       // send acknowledgement
       if (out != null) {
@@ -186,7 +210,7 @@ class BluetoothManager extends Model {
       _host = null;
       _showDevices = true;
       mapCones.clear();
-      notifyListeners();
+      _updateConeCount();
     });
   }
 
@@ -201,8 +225,7 @@ class BluetoothManager extends Model {
     mapCones.forEach((key, value) {
       if (value == ConeState.indicating) mapCones[key] = ConeState.connected;
     });
-    numActivated = 0;
-    notifyListeners();
+    _updateConeCount();
   }
 
   // send reset cone message
@@ -213,8 +236,7 @@ class BluetoothManager extends Model {
 
     // update cone map
     mapCones[name] = ConeState.connected;
-    numActivated--;
-    notifyListeners();
+    _updateConeCount();
   }
 
   // send do indicate message
@@ -226,8 +248,7 @@ class BluetoothManager extends Model {
 
     // update cone map
     mapCones[name] = ConeState.indicating;
-    numActivated++;
-    notifyListeners();
+    _updateConeCount();
   }
 
   // send power off message
@@ -251,7 +272,6 @@ class BluetoothManager extends Model {
     mapCones.forEach((key, value) {
       mapCones[key] = ConeState.disconnected;
     });
-    numConnected = 0;
-    notifyListeners();
+    _updateConeCount();
   }
 }
