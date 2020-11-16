@@ -176,7 +176,7 @@ def main():
                 # remove connection from connections
                 connections_lock.acquire()
                 try:
-                    connections.remove(connect)
+                    connections.remove(tup[0])
                 except ValueError as e:
                     print(e)
                     print("connection already removed")
@@ -211,7 +211,11 @@ def main():
                 tup[0].connectionSend(tup[2])
             # iterate
             unack_msgs_lock.acquire()
-            unack_msgs[tup] = unack_msgs[tup] + 1
+            try:
+                unack_msgs[tup] = unack_msgs[tup] + 1
+            except KeyError as e:
+                print(e)
+                print("already removed from unack_msgs")
             unack_msgs_lock.release()
         
         print("main thread loop end")
