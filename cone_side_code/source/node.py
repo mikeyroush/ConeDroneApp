@@ -337,7 +337,7 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock, message_queue_
     global indicating
     
     distance_arr = [False, 0]
-    schedule.every(.008).seconds.do(sensor.checkSensor, distance_arr)
+    schedule.every(.004).seconds.do(sensor.checkSensor, distance_arr) #Not sure how fast this is gonna go...
 
     while True:
         reset_lock.acquire()

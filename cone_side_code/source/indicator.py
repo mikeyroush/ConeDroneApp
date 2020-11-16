@@ -55,7 +55,7 @@ def indicatorThread(startup, lock):
         if(pixel2 > (numPixels-1)):
             pixel2 = 0
 
-        time.sleep(0.1)
+        time.sleep(0.11)
     return
     
 
