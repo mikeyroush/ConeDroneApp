@@ -822,6 +822,10 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             connect.connectionSend(msg_ack)
             
         elif (msg_type == "disconnect all"):
+            # if we are indicating, stop
+            if indicating:
+                indicator.indicatorStop()
+        
             # pass it on
             for conn in connections.copy():
                 # do not send message back to whomst've sent it 
