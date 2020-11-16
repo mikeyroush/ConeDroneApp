@@ -23,6 +23,11 @@ with SMBus(1) as bus:
     bus.write_byte_data(0x10, 0x26, 0x04) #set read period to 20ms (I think!)
     bus.write_byte_data(0x10, 0x27, 0x00) #set read period to 20ms
     bus.write_byte_data(0x10, 0x28, 0x00) #disable low power mode
+    
+    # please work
+    bus.write_byte_data(0x10, 0x2A, 0x16) #set minimum amplitude to 25 (default is 100)
+    # i beg of you
+    
     #minimum amplitude, and minimum/maximum distances work just fine with the default values (100, and .2m and 8m respectively).
     #reads below the amplitude get set to the dummy value, which is 0. IE: uncertain things get sent to the Zero Distance box, which we already don't care about.
 
