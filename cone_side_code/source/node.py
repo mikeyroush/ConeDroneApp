@@ -960,6 +960,23 @@ def phoneListenerThread(connections_lock,reset_lock,unack_msgs_lock,message_queu
     phone_server_sock.setblocking(1)
     phone_client_sock.setblocking(1)
     
+    if indicating:
+        # create the indication message
+        msg_indicating = messages.craftMessage("indicating", name)
+        msg_num_indicating = int.from_bytes(msg_indicating[4:], "big")
+        
+        message_queue_lock.acquire()
+        if len(message_queue) == MSG_Q_LEN:
+            message_queue.pop(0)
+        message_queue.append(msg_num_indicating)
+        message_queue_lock.release()
+
+        phone_connection.connectionSend(msg_indicating)
+        
+        unack_msgs_lock.acquire()
+        unack_msgs[(phone_connection, msg_num_indicating, msg_indicating)] = 0
+        unack_msgs_lock.release()
+    
     print("closing phone listener thread")
 
 
