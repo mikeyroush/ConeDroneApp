@@ -28,7 +28,7 @@ def enableBluetooth():
 
 '''
 def enablePairing():
-    code = os.system("bluetoothctl <<EOF\ndiscoverable on\npairable on\nagent NoInputNoOutput\ndefault-agent\nEOF")
+    code = os.system("/usr/share/doc/bluez-test-scripts/examples/simple-agent -c NoInputNoOutput &" )
     return code
 
 

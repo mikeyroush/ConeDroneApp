@@ -10,6 +10,7 @@ import utils
 import connection
 import threading
 import time
+import os
 import sys
 import messages
 #import sensor
@@ -328,6 +329,7 @@ Arguments:
 '''
 def flyover_thread(connections_lock, reset_lock, unack_msgs_lock, message_queue_lock):
 
+    
     while True:
         pass
     
@@ -720,8 +722,8 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             # check if we are to disconnect
             if (name == msg_node):
                 # it's for you
-                if indicating:
-                    indicator.indicatorStop()
+                #if indicating:
+                    #indicator.indicatorStop()
                 os.system("shutdown -h now")
             
             else:
@@ -741,6 +743,29 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             # send ack
             msg_ack = messages.craftMessage("ack", name, msg_num)
             connect.connectionSend(msg_ack)
+            
+        elif (msg_type == "disconnect all"):
+            # pass it on
+            for conn in connections.copy():
+                # do not send message back to whomst've sent it 
+                if conn == connect:
+                    continue
+                
+                # send message
+                conn.connectionSend(msg)
+                
+                unack_msgs_lock.acquire()
+                unack_msgs[(conn, msg_num, msg)] = 0
+                unack_msgs_lock.release()
+                
+            # send ack
+            msg_ack = messages.craftMessage("ack", name, msg_num)
+            connect.connectionSend(msg_ack)
+            
+            # schedule shutdown
+            os.system('bash -c "sleep 10; shutdown -h now" &')
+            
+            print("did this get read?")
             
         else:
             # error

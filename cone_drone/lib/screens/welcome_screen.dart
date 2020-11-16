@@ -5,7 +5,7 @@
 // import 'package:modal_progress_hud/modal_progress_hud.dart';
 // import 'package:cone_drone/screens/welcome_screen.dart';
 // import 'package:cone_drone/screens/authenticate/login.dart';
-// import 'package:cone_drone/components/rounded_botton.dart';
+// import 'package:cone_drone/components/rounded_button.dart';
 // import 'package:cone_drone/constants.dart';
 //
 // class WelcomeScreen extends StatefulWidget {
