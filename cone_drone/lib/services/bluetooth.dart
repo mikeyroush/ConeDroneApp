@@ -19,7 +19,7 @@ class BluetoothManager extends Model {
   Map<String, ConeState> mapCones = new Map<String, ConeState>();
   int numConnected = 0;
   int numActivated = 0;
-  bool _showDevices = true;
+  bool _showDevices = false;
   bool connecting = false;
 
   // add vars for total, activated, errors
@@ -273,5 +273,13 @@ class BluetoothManager extends Model {
       mapCones[key] = ConeState.disconnected;
     });
     _updateConeCount();
+  }
+
+  // send change dead zone height
+  void sendChangeDeadZoneHeight(int height) {
+    Uint8List heightMsg =
+        Uint8List.fromList(craftMessage("dead zone", height.toString()));
+    print('Sending change dead zone height to $height...');
+    _connection.output.add(heightMsg);
   }
 }
