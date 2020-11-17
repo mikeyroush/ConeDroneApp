@@ -9,7 +9,8 @@ SDA_PIN = 3 #I don't think these are strictly necessary but I'm leaving them any
 SCL_PIN = 5
 PIN6_PIN = 16 #pin 6 on the sensor, which is used to check when data is ready. AKA: when a reading is taken!
 MIN_DISTANCE = 400
-MAX_DISTANCE = 1000
+MAX_DISTANCE = 800
+MAX_AMPLITUDE = 1500 #false positives often have weirdly high amplitudes for supposedly being 4+ meters away. 
 last_triggered = False
 previous_distane = 0
 
@@ -27,15 +28,13 @@ with SMBus(1) as bus:
     bus.write_byte_data(0x10, 0x27, 0x00) #set read period to 20ms
     bus.write_byte_data(0x10, 0x28, 0x00) #disable low power mode
     
-    # please work
-    bus.write_byte_data(0x10, 0x2A, 0x16) #set minimum amplitude to 25 (default is 100)
-    # i beg of you
+    bus.write_byte_data(0x10, 0x2A, 0x64) #set minimum amplitude to 100
     
     #minimum amplitude, and minimum/maximum distances work just fine with the default values (100, and .2m and 8m respectively).
     #reads below the amplitude get set to the dummy value, which is 0. IE: uncertain things get sent to the Zero Distance box, which we already don't care about.
 
-GPIO.setmode(GPIO.BCM) #use pin numbers instead of GPIO numbers. This'll probably be changed as this section of code is integrated with the rest.
-GPIO.setup(PIN6_PIN, GPIO.IN) #gotta read from
+GPIO.setmode(GPIO.BCM) #use GPIO numbers
+GPIO.setup(PIN6_PIN, GPIO.IN) #gotta read from this one 
 ################################################################################################################
 
 #The TF-Luna stores data as two bytes, in two registers. Add high * 256 + low, and you get the actual value.
@@ -64,11 +63,13 @@ def interpretDistance(distance):
 
 #noise filtering try 1
 def interpretDistance(distance):
+    global last_triggered
     if (last_triggered and distance > MIN_DISTANCE and distance < MAX_DISTANCE):
+        last_triggered = False
         return True
     last_triggered = (distance > MIN_DISTANCE and distance < MAX_DISTANCE)
     return False
-
+#this one seemed to work pretty good, actually. Neat!
 '''
 #noise filtering try 2
 def interpetDistance(distance):

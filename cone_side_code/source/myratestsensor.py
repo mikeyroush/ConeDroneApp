@@ -47,10 +47,18 @@ while(True):
 '''
 
 blar = [False, 0]
-sensor.MIN_DISTANCE = 180
-schedule.every(.008).seconds.do(sensor.checkSensor, distance_arr = blar)
+sensor.MIN_DISTANCE = 400
+schedule.every(.004).seconds.do(sensor.checkSensor, distance_arr = blar)
 while(True):
     schedule.run_pending()
-    time.sleep(.1)
-    print(blar[1])
+    if (blar[0]):
+        print("distance: ", blar[1])
+        with SMBus(1) as bus:
+            amp = bus.read_byte_data(0x10, 0x02)
+            amp = amp + (bus.read_byte_data(0x10, 0x03) << 8)
+            print("amplitude: ", amp)
+            print()
+            time.sleep(.5)
+        
+
 
