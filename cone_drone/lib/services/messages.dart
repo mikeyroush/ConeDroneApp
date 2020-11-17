@@ -203,6 +203,10 @@ Uint8List craftMessage(type, name, {num: -1, name2: "dronecone???"}) {
         msg_int = msg_int | 0x0C00000000000000;
         break;
       }
+    case "dead zone":
+      {
+        msg_int = msg_int | 0x0D00000000000000;
+      }
   }
 
   if (name2 != "dronecone???") {
@@ -210,8 +214,13 @@ Uint8List craftMessage(type, name, {num: -1, name2: "dronecone???"}) {
     msg_int = msg_int | (msg_node2 << 44);
   }
 
-  var msg_node = int.parse(name.substring(9));
-  msg_int = msg_int | (msg_node << 32);
+  if (type != "dead zone") {
+    var msg_node = int.parse(name.substring(9));
+    msg_int = msg_int | (msg_node << 32);
+  } else {
+    var msg_node = int.parse(name);
+    msg_int = msg_int | (msg_node << 32);
+  }
 
   // print(num);
 

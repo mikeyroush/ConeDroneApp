@@ -41,6 +41,15 @@ class _HomeLayoutState extends State<HomeLayout>
         Tween<double>(begin: 0.2, end: 1).animate(_controller);
   }
 
+  void _showSettingsPanel(BluetoothManager model) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SettingsForm(model: model);
+      },
+    );
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -116,9 +125,9 @@ class _HomeLayoutState extends State<HomeLayout>
                         color: Colors.white70.withOpacity(0.4),
                       ),
                       FlatButton.icon(
-                        onPressed: () => _auth.signOut(),
+                        onPressed: () => _showSettingsPanel(_bluetoothManager),
                         icon: Icon(Icons.exit_to_app, color: Colors.white70),
-                        label: Text('Logout', style: kTextFieldStyle),
+                        label: Text('Settings', style: kTextFieldStyle),
                       ),
                     ],
                   ),
