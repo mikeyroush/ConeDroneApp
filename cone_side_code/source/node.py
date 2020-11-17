@@ -176,7 +176,7 @@ def main():
                 # remove connection from connections
                 connections_lock.acquire()
                 try:
-                    connections.remove(connect)
+                    connections.remove(tup[0])
                 except ValueError as e:
                     print(e)
                     print("connection already removed")
@@ -211,7 +211,11 @@ def main():
                 tup[0].connectionSend(tup[2])
             # iterate
             unack_msgs_lock.acquire()
-            unack_msgs[tup] = unack_msgs[tup] + 1
+            try:
+                unack_msgs[tup] = unack_msgs[tup] + 1
+            except KeyError as e:
+                print(e)
+                print("already removed from unack_msgs")
             unack_msgs_lock.release()
         
         print("main thread loop end")
@@ -337,7 +341,7 @@ def flyover_thread(connections_lock, reset_lock, unack_msgs_lock, message_queue_
     global indicating
     
     distance_arr = [False, 0]
-    schedule.every(.008).seconds.do(sensor.checkSensor, distance_arr)
+    schedule.every(.004).seconds.do(sensor.checkSensor, distance_arr) #Not sure how fast this is gonna go...
 
     while True:
         reset_lock.acquire()
@@ -822,6 +826,10 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             connect.connectionSend(msg_ack)
             
         elif (msg_type == "disconnect all"):
+            # if we are indicating, stop
+            if indicating:
+                indicator.indicatorStop()
+        
             # pass it on
             for conn in connections.copy():
                 # do not send message back to whomst've sent it 
@@ -951,6 +959,23 @@ def phoneListenerThread(connections_lock,reset_lock,unack_msgs_lock,message_queu
     
     phone_server_sock.setblocking(1)
     phone_client_sock.setblocking(1)
+    
+    if indicating:
+        # create the indication message
+        msg_indicating = messages.craftMessage("indicating", name)
+        msg_num_indicating = int.from_bytes(msg_indicating[4:], "big")
+        
+        message_queue_lock.acquire()
+        if len(message_queue) == MSG_Q_LEN:
+            message_queue.pop(0)
+        message_queue.append(msg_num_indicating)
+        message_queue_lock.release()
+
+        phone_connection.connectionSend(msg_indicating)
+        
+        unack_msgs_lock.acquire()
+        unack_msgs[(phone_connection, msg_num_indicating, msg_indicating)] = 0
+        unack_msgs_lock.release()
     
     print("closing phone listener thread")
 

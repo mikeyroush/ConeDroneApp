@@ -10,6 +10,9 @@ SCL_PIN = 5
 PIN6_PIN = 16 #pin 6 on the sensor, which is used to check when data is ready. AKA: when a reading is taken!
 MIN_DISTANCE = 400
 MAX_DISTANCE = 1000
+last_triggered = False
+previous_distane = 0
+
 
 global dist
 ################################################################################################################
@@ -20,12 +23,12 @@ with SMBus(1) as bus:
     #write_byte_data(address, register, data)
     bus.write_byte_data(0x10, 0x23, 0x00) #set sensor to continuous mode
     bus.write_byte_data(0x10, 0x25, 0x01) #enable lidar sensor. The documentation straight-up lies, it says setting this to *0x00* enables the sensor.
-    bus.write_byte_data(0x10, 0x26, 0x04) #set read period to 20ms (I think!)
+    bus.write_byte_data(0x10, 0x26, 0x02) #set read period to 20ms 
     bus.write_byte_data(0x10, 0x27, 0x00) #set read period to 20ms
     bus.write_byte_data(0x10, 0x28, 0x00) #disable low power mode
     
     # please work
-    bus.write_byte_data(0x10, 0x2A, 0x16) #set minimum amplitude to 25 (default is 100)
+    bus.write_byte_data(0x10, 0x2A, 0x64) #set minimum amplitude to 25 (default is 100)
     # i beg of you
     
     #minimum amplitude, and minimum/maximum distances work just fine with the default values (100, and .2m and 8m respectively).
@@ -50,6 +53,26 @@ def checkSensor(distance_arr):
     #package information to be sent out (gotta do it weird due to how schedule works)
     distance_arr[0] = interpretDistance(dist)
     distance_arr[1] = dist
-
+'''
 def interpretDistance(distance):
     return (distance > MIN_DISTANCE and distance < MAX_DISTANCE)
+    if (last_triggered and distance > MIN_DISTANCE and distance < MAX_DISTANCE):
+        return True
+    last_triggered = (distance > MIN_DISTANCE and distance < MAX_DISTANCE)
+    return False
+'''
+
+#noise filtering try 1
+def interpretDistance(distance):
+    global last_triggered
+    if (last_triggered and distance > MIN_DISTANCE and distance < MAX_DISTANCE):
+        return True
+    last_triggered = (distance > MIN_DISTANCE and distance < MAX_DISTANCE)
+    return False
+
+'''
+#noise filtering try 2
+def interpetDistance(distance):
+    use_dist = (previous_distance + distance) / 2
+    return (use_dist > MIN_DISTANCE and use_dist < MAX_DISTANCE)
+'''
