@@ -105,7 +105,10 @@ class _UpdatePilotFormState extends State<UpdatePilotForm> {
             ],
           ),
           InkWell(
-            child: Text('View Records'),
+            child: Text(
+              'View Records',
+              style: TextStyle(decoration: TextDecoration.underline),
+            ),
             onTap: () => Navigator.push(context, MaterialPageRoute(
               builder: (context) {
                 return StreamProvider<List<Flight>>.value(

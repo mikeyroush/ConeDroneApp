@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cone_drone/models/pilot.dart';
 import 'package:cone_drone/screens/pilots/update_pilot.dart';
+import 'package:cone_drone/components/bottom_sheet_template.dart';
 
 class PilotTile extends StatelessWidget {
   final Pilot pilot;
@@ -8,27 +9,11 @@ class PilotTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    void _showUpdatePilotPanel() {
-      showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          return ListView(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 60.0,
-                  vertical: 20.0,
-                ),
-                child: UpdatePilotForm(pilot: pilot),
-              ),
-            ],
-          );
-        },
-      );
-    }
-
     return InkWell(
-      onTap: () => _showUpdatePilotPanel(),
+      onTap: () => bottomSheetTemplate(
+        context: context,
+        child: UpdatePilotForm(pilot: pilot),
+      ),
       child: Padding(
         padding: EdgeInsets.only(top: 8.0),
         child: Card(

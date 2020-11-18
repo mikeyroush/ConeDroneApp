@@ -6,6 +6,7 @@ import 'package:cone_drone/screens/pilots/pilot_list.dart';
 import 'package:cone_drone/screens/pilots/add_pilot.dart';
 import 'package:cone_drone/models/pilot.dart';
 import 'package:cone_drone/models/user.dart';
+import 'package:cone_drone/components/bottom_sheet_template.dart';
 import 'package:cone_drone/constants.dart';
 
 class PilotScreen extends StatelessWidget {
@@ -14,25 +15,6 @@ class PilotScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<MyUser>(context);
-
-    void _showAddPilotPanel() {
-      showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          return ListView(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 60.0,
-                  vertical: 20.0,
-                ),
-                child: AddPilotForm(),
-              ),
-            ],
-          );
-        },
-      );
-    }
 
     return StreamProvider<List<Pilot>>.value(
       value: DatabaseService(instructorID: user.uid).pilots,
@@ -48,7 +30,10 @@ class PilotScreen extends StatelessWidget {
             ),
             FloatingActionButton(
               child: Text('+'),
-              onPressed: () => _showAddPilotPanel(),
+              onPressed: () => bottomSheetTemplate(
+                context: context,
+                child: AddPilotForm(),
+              ),
             ),
           ],
         ),

@@ -72,10 +72,10 @@ class _FlightStopwatchState extends State<FlightStopwatch> {
                     _model.stopwatch.isRunning
                         ? setState(() => _model.stopwatch.stop())
                         : setState(() {
-                            _model.stopwatch.reset();
                             timeElapsed = "00:00.0";
+                            _model.stopwatch.reset();
+                            if (_model.isConnected) _model.sendResetAll();
                           });
-                    _model.sendResetAll();
                   },
                 ),
               ),

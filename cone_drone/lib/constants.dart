@@ -28,6 +28,12 @@ const kMenuTextStyle = TextStyle(
   color: Colors.white70,
 );
 
+const kMenuTextDarkStyle = TextStyle(
+  fontWeight: FontWeight.bold,
+  fontSize: 25.0,
+  color: Colors.black54,
+);
+
 const kTextBold = TextStyle(
   color: Colors.black54,
   fontWeight: FontWeight.w900,

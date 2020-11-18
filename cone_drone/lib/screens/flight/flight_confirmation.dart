@@ -51,88 +51,85 @@ class _FlightConfirmationState extends State<FlightConfirmation> {
     return StreamProvider.value(
       value: DatabaseService(instructorID: user.uid).pilots,
       catchError: (_, __) => null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 48.0),
-        child: ListView(
+      child: Form(
+        key: _formKey,
+        child: Column(
           children: [
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  PilotDropdown(
-                    updatePilot: updatePilot,
-                    pilotID: _currentPilotID,
-                  ),
-                  SizedBox(height: 8.0),
-                  // ***** connected cones *****
-                  TextFormField(
-                    initialValue: _conesTotal.toString(),
-                    style: kTextBold,
-                    decoration: kTextFieldDecoration.copyWith(
-                      hintText: 'enter a value.',
-                      hintStyle: kTextFieldDarkStyle,
-                      prefix: RichText(
-                        textScaleFactor: 1.1,
-                        text: TextSpan(
-                          text: 'Connected Cones: ',
-                          style: kTextFieldDarkStyle,
-                        ),
-                      ),
-                    ),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      FilteringTextInputFormatter.singleLineFormatter
-                    ],
-                    onChanged: (val) =>
-                        setState(() => _conesTotal = int.parse(val)),
-                    validator: FormValidator.validateInteger,
-                  ),
-                  SizedBox(height: 8.0),
-                  // ***** activated cones *****
-                  TextFormField(
-                    initialValue: _conesActivated.toString(),
-                    style: kTextBold,
-                    decoration: kTextFieldDecoration.copyWith(
-                      hintText: 'enter a value',
-                      hintStyle: kTextFieldDarkStyle,
-                      prefix: RichText(
-                        textScaleFactor: 1.1,
-                        text: TextSpan(
-                          text: 'Activated Cones: ',
-                          style: kTextFieldDarkStyle,
-                        ),
-                      ),
-                    ),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      FilteringTextInputFormatter.singleLineFormatter
-                    ],
-                    onChanged: (val) =>
-                        setState(() => _conesActivated = int.parse(val)),
-                    validator: FormValidator.validateInteger,
-                  ),
-                  RoundedButton(
-                    title: 'Submit',
-                    backgroundColor: Colors.blueAccent,
-                    onPress: () async {
-                      if (_formKey.currentState.validate()) {
-                        // send data
-                        await DatabaseService().addFlight(
-                          _currentPilotID,
-                          _conesTotal,
-                          _conesActivated,
-                          widget.elapsedMilli,
-                        );
-                        // pop form and reset screen
-                        Navigator.pop(context);
-                      }
-                    },
-                  )
-                ],
-              ),
+            Text(
+              'Review Flight Record',
+              style: kMenuTextDarkStyle,
             ),
+            SizedBox(height: 12.0),
+            PilotDropdown(
+              updatePilot: updatePilot,
+              pilotID: _currentPilotID,
+            ),
+            SizedBox(height: 8.0),
+            // ***** connected cones *****
+            TextFormField(
+              initialValue: _conesTotal.toString(),
+              style: kTextBold,
+              decoration: kTextFieldDecoration.copyWith(
+                hintText: 'enter a value.',
+                hintStyle: kTextFieldDarkStyle,
+                prefix: RichText(
+                  textScaleFactor: 1.1,
+                  text: TextSpan(
+                    text: 'Connected Cones: ',
+                    style: kTextFieldDarkStyle,
+                  ),
+                ),
+              ),
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                FilteringTextInputFormatter.singleLineFormatter
+              ],
+              onChanged: (val) => setState(() => _conesTotal = int.parse(val)),
+              validator: FormValidator.validateInteger,
+            ),
+            SizedBox(height: 8.0),
+            // ***** activated cones *****
+            TextFormField(
+              initialValue: _conesActivated.toString(),
+              style: kTextBold,
+              decoration: kTextFieldDecoration.copyWith(
+                hintText: 'enter a value',
+                hintStyle: kTextFieldDarkStyle,
+                prefix: RichText(
+                  textScaleFactor: 1.1,
+                  text: TextSpan(
+                    text: 'Activated Cones: ',
+                    style: kTextFieldDarkStyle,
+                  ),
+                ),
+              ),
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                FilteringTextInputFormatter.singleLineFormatter
+              ],
+              onChanged: (val) =>
+                  setState(() => _conesActivated = int.parse(val)),
+              validator: FormValidator.validateInteger,
+            ),
+            RoundedButton(
+              title: 'Submit',
+              backgroundColor: Colors.blueAccent,
+              onPress: () async {
+                if (_formKey.currentState.validate()) {
+                  // send data
+                  await DatabaseService().addFlight(
+                    _currentPilotID,
+                    _conesTotal,
+                    _conesActivated,
+                    widget.elapsedMilli,
+                  );
+                  // pop form and reset screen
+                  Navigator.pop(context);
+                }
+              },
+            )
           ],
         ),
       ),
