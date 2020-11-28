@@ -1,3 +1,5 @@
+#Script from when we were testing out a non-stepper motor found in the lab. 
+
 import signal
 import sys
 #import RPi.GPIO as GPIO disabled for the moment because I'm on my windows machine

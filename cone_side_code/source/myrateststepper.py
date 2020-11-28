@@ -1,3 +1,5 @@
+#Quick 'n dirty testing for a stepper motor. 
+
 import signal
 import sys
 #import RPi.GPIO as GPIO disabled for the moment because I'm on my windows machine

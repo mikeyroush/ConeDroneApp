@@ -1,3 +1,5 @@
+#Quick 'n dirty script for troubleshooting with the sensor.
+
 import signal
 import sys
 #import RPi.GPIO as GPIO disabled for the moment because I'm on my windows machine

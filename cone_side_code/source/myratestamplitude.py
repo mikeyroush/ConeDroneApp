@@ -1,3 +1,4 @@
+#quick 'n dirty script for testing the amplitude of readings gotten through the sensor.
 import signal
 import sys
 #import RPi.GPIO as GPIO disabled for the moment because I'm on my windows machine
