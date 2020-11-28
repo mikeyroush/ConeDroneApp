@@ -32,87 +32,90 @@ class _RegisterState extends State<Register> {
         : Scaffold(
             backgroundColor: Colors.blueGrey.shade900,
             body: SafeArea(
-              child: Padding(
+              child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 50.0, vertical: 20.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Flexible(
-                        child: Hero(
-                          tag: 'logo',
-                          child: Container(
-                            child: Image.asset('images/drone.png'),
-                            height: 200.0,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: screenOrientation == Orientation.portrait
-                            ? 48.0
-                            : 8.0,
-                      ),
-                      TextFormField(
-                        validator: FormValidator.validateEmail,
-                        keyboardType: TextInputType.emailAddress,
-                        style: kTextFieldStyle,
-                        decoration:
-                            kTextFieldDecoration.copyWith(hintText: 'Email'),
-                        onChanged: (value) {
-                          setState(() {
-                            email = value;
-                          });
-                        },
-                      ),
-                      SizedBox(height: 8.0),
-                      TextFormField(
-                        obscureText: true,
-                        validator: FormValidator.validatePassword,
-                        style: kTextFieldStyle,
-                        decoration:
-                            kTextFieldDecoration.copyWith(hintText: 'Password'),
-                        onChanged: (value) {
-                          setState(() {
-                            pass = value;
-                          });
-                        },
-                      ),
-                      RoundedButton(
-                        title: 'Register',
-                        backgroundColor: Colors.blueAccent,
-                        onPress: () async {
-                          if (_formKey.currentState.validate()) {
-                            setState(() => _loading = true);
-                            dynamic result = await _auth
-                                .registerWithEmailAndPassword(email, pass);
-                            if (result.runtimeType != MyUser) {
-                              setState(() {
-                                error = result;
-                                _loading = false;
-                              });
-                            }
-                          }
-                        },
-                      ),
-                      Row(
+                child: ListView(
+                  children: [
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Expanded(child: Divider(color: Colors.white70)),
-                          FlatButton(
-                            onPressed: () => widget.toggleScreen(),
-                            child: Text(
-                              'Already have an account?',
-                              style: kTextFieldStyle,
+                          Hero(
+                            tag: 'logo',
+                            child: Container(
+                              child: Image.asset('images/drone.png'),
+                              height: 200.0,
                             ),
                           ),
-                          Expanded(child: Divider(color: Colors.white70)),
+                          SizedBox(
+                            height: screenOrientation == Orientation.portrait
+                                ? 48.0
+                                : 8.0,
+                          ),
+                          TextFormField(
+                            validator: FormValidator.validateEmail,
+                            keyboardType: TextInputType.emailAddress,
+                            style: kTextFieldStyle,
+                            decoration: kTextFieldDecoration.copyWith(
+                                hintText: 'Email'),
+                            onChanged: (value) {
+                              setState(() {
+                                email = value;
+                              });
+                            },
+                          ),
+                          SizedBox(height: 8.0),
+                          TextFormField(
+                            obscureText: true,
+                            validator: FormValidator.validatePassword,
+                            style: kTextFieldStyle,
+                            decoration: kTextFieldDecoration.copyWith(
+                                hintText: 'Password'),
+                            onChanged: (value) {
+                              setState(() {
+                                pass = value;
+                              });
+                            },
+                          ),
+                          RoundedButton(
+                            title: 'Register',
+                            backgroundColor: Colors.blueAccent,
+                            onPress: () async {
+                              if (_formKey.currentState.validate()) {
+                                setState(() => _loading = true);
+                                dynamic result = await _auth
+                                    .registerWithEmailAndPassword(email, pass);
+                                if (result.runtimeType != MyUser) {
+                                  setState(() {
+                                    error = result;
+                                    _loading = false;
+                                  });
+                                }
+                              }
+                            },
+                          ),
+                          Row(
+                            children: [
+                              Expanded(child: Divider(color: Colors.white70)),
+                              FlatButton(
+                                onPressed: () => widget.toggleScreen(),
+                                child: Text(
+                                  'Already have an account?',
+                                  style: kTextFieldStyle,
+                                ),
+                              ),
+                              Expanded(child: Divider(color: Colors.white70)),
+                            ],
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(error,
+                              style: TextStyle(color: Colors.redAccent)),
                         ],
                       ),
-                      SizedBox(height: 8.0),
-                      Text(error, style: TextStyle(color: Colors.redAccent)),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),

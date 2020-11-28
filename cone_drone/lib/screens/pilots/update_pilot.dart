@@ -104,17 +104,26 @@ class _UpdatePilotFormState extends State<UpdatePilotForm> {
               ),
             ],
           ),
-          InkWell(
-            child: Text('View Records'),
-            onTap: () => Navigator.push(context, MaterialPageRoute(
-              builder: (context) {
-                return StreamProvider<List<Flight>>.value(
-                  value: DatabaseService(pilotID: widget.pilot.uid).flights,
-                  catchError: (_, __) => null,
-                  child: FlightList(),
-                );
-              },
-            )),
+          Row(
+            children: [
+              Expanded(child: Divider(color: Colors.black54)),
+              FlatButton(
+                child: Text(
+                  'View Records',
+                  style: kTextFieldDarkStyle,
+                ),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (context) {
+                    return StreamProvider<List<Flight>>.value(
+                      value: DatabaseService(pilotID: widget.pilot.uid).flights,
+                      catchError: (_, __) => null,
+                      child: FlightList(),
+                    );
+                  },
+                )),
+              ),
+              Expanded(child: Divider(color: Colors.black54)),
+            ],
           ),
         ],
       ),

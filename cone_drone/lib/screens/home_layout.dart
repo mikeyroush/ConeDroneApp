@@ -7,6 +7,7 @@ import 'package:cone_drone/screens/flight/flight_screen.dart';
 import 'package:cone_drone/screens/disable_bluetooth.dart';
 import 'package:cone_drone/services/auth.dart';
 import 'package:cone_drone/services/bluetooth.dart';
+import 'package:cone_drone/components/bottom_sheet_template.dart';
 import 'package:cone_drone/constants.dart';
 
 class HomeLayout extends StatefulWidget {
@@ -39,15 +40,6 @@ class _HomeLayoutState extends State<HomeLayout>
         .animate(_controller);
     _menuScaleAnimation =
         Tween<double>(begin: 0.2, end: 1).animate(_controller);
-  }
-
-  void _showSettingsPanel(BluetoothManager model) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return SettingsForm(model: model);
-      },
-    );
   }
 
   @override
@@ -125,7 +117,10 @@ class _HomeLayoutState extends State<HomeLayout>
                         color: Colors.white70.withOpacity(0.4),
                       ),
                       FlatButton.icon(
-                        onPressed: () => _showSettingsPanel(_bluetoothManager),
+                        onPressed: () => bottomSheetTemplate(
+                          context: context,
+                          child: SettingsForm(model: _bluetoothManager),
+                        ),
                         icon: Icon(Icons.exit_to_app, color: Colors.white70),
                         label: Text('Settings', style: kTextFieldStyle),
                       ),

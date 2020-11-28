@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scoped_model/scoped_model.dart';
 import 'package:cone_drone/services/bluetooth.dart';
 import 'package:cone_drone/screens/flight/pilot_dropdown.dart';
 import 'package:cone_drone/screens/flight/flight_confirmation.dart';
 import 'package:cone_drone/services/database.dart';
 import 'package:cone_drone/models/user.dart';
 import 'package:cone_drone/components/rounded_button.dart';
+import 'package:cone_drone/components/bottom_sheet_template.dart';
 import 'package:cone_drone/constants.dart';
-import 'package:scoped_model/scoped_model.dart';
 
 class FlightSubmissionForm extends StatefulWidget {
   @override
@@ -24,21 +25,6 @@ class _FlightSubmissionFormState extends State<FlightSubmissionForm> {
 
   @override
   Widget build(BuildContext context) {
-    void _showFlightConfirmationPanel(BluetoothManager model) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder: (context) {
-          return FlightConfirmation(
-            currentPilotID: _currentPilotID,
-            conesTotal: model.numConnected,
-            conesActivated: model.numActivated,
-            elapsedMilli: model.stopwatch.elapsedMilliseconds,
-          );
-        },
-      );
-    }
-
     final user = Provider.of<MyUser>(context);
 
     return ScopedModelDescendant<BluetoothManager>(
@@ -101,7 +87,15 @@ class _FlightSubmissionFormState extends State<FlightSubmissionForm> {
                       onPress: () async {
                         if (_formKey.currentState.validate() &&
                             !model.stopwatch.isRunning) {
-                          _showFlightConfirmationPanel(model);
+                          bottomSheetTemplate(
+                            context: context,
+                            child: FlightConfirmation(
+                              currentPilotID: _currentPilotID,
+                              conesTotal: model.numConnected,
+                              conesActivated: model.numActivated,
+                              elapsedMilli: model.stopwatch.elapsedMilliseconds,
+                            ),
+                          );
                         }
                       },
                     )

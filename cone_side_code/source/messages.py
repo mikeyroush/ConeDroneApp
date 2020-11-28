@@ -31,6 +31,7 @@ CONNECTION = 0x9
 ID = 0xA
 DISCONNECT = 0xB
 DISCONNECT_ALL = 0xC
+DEAD_ZONE = 0xD
 
 '''
 parseMessage
@@ -71,13 +72,18 @@ def parseMessage(msg):
         parsed_msg0 = "disconnect"
     elif (msg_type == DISCONNECT_ALL):
         parsed_msg0 = "disconnect all"
+    elif (msg_type == DEAD_ZONE):
+        parsed_msg0 = "dead zone"
     else:
         print("could not understand message type")
     
     # get the msg_node that is present for all messages
     msg_node_full = int.from_bytes(msg[1:4], "big")
     msg_node = (msg_node_full & 0x000FFF)
-    parsed_msg1 = "dronecone" + str(msg_node)
+    if parsed_msg0 != "dead zone":
+        parsed_msg1 = "dronecone" + str(msg_node)
+    else:
+        parsed_msg1 = str(msg_node)
     
     # get the message number
     msg_num = int.from_bytes(msg[4:], "big")
@@ -137,6 +143,8 @@ def craftMessage(msg_type, name, num=None, name2=None):
         msg_int = msg_int | (DISCONNECT << 56)
     elif (msg_type == "disconnect all"):
         msg_int = msg_int | (DISCONNECT_ALL << 56)
+    elif (msg_type == "dead zone"):
+        msg_int = msg_int | (DEAD_ZONE << 56)
     else:
         print("Error: craftMessage cannot understand message type")
     

@@ -33,6 +33,7 @@ do_phone_discover = True    # modified
 phone_connection = None     # modified
 phone_server_sock = None    # modified
 phone_client_sock = None    # modified
+sensor_min_dist = None      # modified
 
 '''
 main
@@ -444,6 +445,7 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
     global phone_connection
     global MSG_Q_LEN
     global indicating
+    global sensor_min_dist
     
     while True:
         
@@ -851,6 +853,29 @@ def message_thread(connect, connections_lock, reset_lock, unack_msgs_lock, messa
             os.system('bash -c "sleep 10; shutdown -h now" &')
             
             print("did this get read?")
+            
+        elif (msg_type == "dead zone"):
+            
+            #  pass message on 
+            for conn in connections.copy():
+                # do not send message back to whomst've sent it 
+                if conn == connect:
+                    continue
+                
+                # send message
+                conn.connectionSend(msg)
+                
+                unack_msgs_lock.acquire()
+                unack_msgs[(conn, msg_num, msg)] = 0
+                unack_msgs_lock.release()
+            
+            # send ack
+            msg_ack = messages.craftMessage("ack", name, msg_num)
+            connect.connectionSend(msg_ack)
+            
+            # set sensor_min_dist
+            min_dist = int(msg_node)
+            sensor.updateMinDist(min_dist)
             
         else:
             # error
